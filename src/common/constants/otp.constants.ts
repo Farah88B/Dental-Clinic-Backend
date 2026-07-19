@@ -1,0 +1,17 @@
+export const OTP = {
+  CODE_LENGTH: 6,
+  EXPIRY_MINUTES: 5,
+  MAX_ATTEMPTS: 5,
+} as const;
+
+export const ACTIVATION_TOKEN = {
+  TTL: '10m',
+  PURPOSE: 'ACTIVATION',
+} as const;
+
+export const OTP_ERROR_CODES = {
+  OTP_EXPIRED: 'OTP_EXPIRED',
+  OTP_INVALID: 'OTP_INVALID',
+  OTP_MAX_ATTEMPTS: 'OTP_MAX_ATTEMPTS',
+  OTP_ALREADY_USED: 'OTP_ALREADY_USED',
+} as const;

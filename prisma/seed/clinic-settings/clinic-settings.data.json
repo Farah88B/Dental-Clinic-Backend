@@ -1,0 +1,9 @@
+{
+  "bufferTimeMinutes": 0,
+  "cancelRescheduleWindowHours": 24,
+  "defaultConsultationDurationMinutes": 30,
+  "reminderLeadTimeHours": 3,
+  "ratingValidityHours": 5,
+  "autoConfirmationEnabled": false,
+  "onlineBookingEnabled": true
+}

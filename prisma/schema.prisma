@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+  DISABLED
+  INVITED
+}
+
+
+model Role {
+  id Int @id @default(autoincrement())
+
+  code String @unique
+  nameAr String
+  nameEn String
+
+  descriptionAr String?
+  descriptionEn String?
+
+  createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+
+  permissions RolePermission[]
+  accounts    AccountRole[]
+}
+
+
+model Permission {
+ id Int @id @default(autoincrement())
+ 
+  code String @unique
+
+  nameAr String
+  nameEn String
+
+  descriptionAr String?
+  descriptionEn String?
+
+  order Int?
+
+  roles RolePermission[]
+}
+
+
+model RolePermission {
+  roleId Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+
+model Account {
+  id Int @id @default(autoincrement())
+
+  phone String @unique
+  password String?
+
+  status AccountStatus @default(PENDING_ACTIVATION)
+
+  biometricEnabled Boolean @default(false)
+
+  phoneVerifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  // Audit
+  createdById Int?
+  createdBy Account? @relation("AccountCreator",fields: [createdById], references: [id] )
+
+  createdAccounts Account[] @relation("AccountCreator")
+
+  updatedClinicSettings ClinicSettings? @relation("ClinicSettingsUpdater")
+
+  roles AccountRole[]
+
+  otpVerifications OtpVerification[]
+
+}
+
+model AccountRole {
+  accountId Int
+  roleId Int
+
+  assignedAt DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([accountId, roleId])
+}
+
+model OtpVerification {
+  id Int @id @default(autoincrement())
+
+  accountId Int
+
+  code String @db.VarChar(6)
+
+  type OtpType
+
+  expiresAt DateTime
+
+  verifiedAt DateTime?
+
+  isUsed Boolean @default(false)
+
+  attempts Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account Account @relation( fields: [accountId], references: [id],  onDelete: Cascade )
+
+  metadata Json?  
+  @@index([accountId, type])
+}
+
+
+enum OtpType {
+  REGISTER
+  LOGIN
+  RESET_PASSWORD
+  CHANGE_PHONE
+}
+
+model ClinicSettings {
+  id Int @id @default(1)
+
+  bufferTimeMinutes                   Int     @default(0)
+  cancelRescheduleWindowHours         Int     @default(24)
+  defaultConsultationDurationMinutes  Int     @default(30)
+  reminderLeadTimeHours               Int     @default(3)
+  ratingValidityHours                 Int     @default(5)
+  autoConfirmationEnabled             Boolean @default(false)
+  onlineBookingEnabled                Boolean @default(true)
+
+  updatedByAccountId Int? @unique
+  updatedBy          Account? @relation("ClinicSettingsUpdater", fields: [updatedByAccountId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

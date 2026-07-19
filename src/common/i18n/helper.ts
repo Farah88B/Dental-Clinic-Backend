@@ -1,0 +1,94 @@
+import { AUTH_ERROR_CODES } from "../constants/auth.constants";
+import { ERROR_CODES } from "../constants/error-codes.constants";
+import { OTP_ERROR_CODES } from "../constants/otp.constants";
+export type Language = 'ar' | 'en';
+
+// Central message catalog. Keep error codes (used in ErrorResponseDto.code)
+// stable, and translate ONLY the human-facing message here — the frontend
+// keys off `code`, never off the translated text.
+const MESSAGES: Record<string, Record<Language, string>> = {
+    [ERROR_CODES.NOT_FOUND]: {
+    ar: 'العنصر المطلوب غير موجود',
+    en: 'The requested item was not found',
+  },
+  [ERROR_CODES.DUPLICATE_VALUE]: {
+    ar: 'هذه القيمة مستخدمة مسبقًا',
+    en: 'This value is already in use',
+  },
+  [ERROR_CODES.IN_USE_CANNOT_DELETE]: {
+    ar: 'لا يمكن حذف هذا العنصر لأنه مرتبط ببيانات أخرى',
+    en: 'This item cannot be deleted because it is linked to other data',
+  },
+  [ERROR_CODES.INVALID_TOKEN]: {
+    ar: 'جلسة الدخول غير صالحة أو منتهية',
+    en: 'Your session is invalid or has expired',
+  },
+  [ERROR_CODES.NOT_AUTHENTICATED]: {
+    ar: 'يجب تسجيل الدخول للوصول لهذه الخدمة',
+    en: 'You must be logged in to access this resource',
+  },
+  [ERROR_CODES.INSUFFICIENT_PERMISSIONS]: {
+    ar: 'لا تملك الصلاحية الكافية لتنفيذ هذا الإجراء',
+    en: 'You do not have sufficient permissions for this action',
+  },
+  [ERROR_CODES.CANNOT_DISABLE_LAST_ADMIN]: {
+    ar: 'لا يمكن تعطيل آخر حساب مدير في النظام',
+    en: 'Cannot disable the last remaining admin account',
+  },
+  [ERROR_CODES.INTERNAL_ERROR]: {
+    ar: 'حدث خطأ غير متوقع، الرجاء المحاولة لاحقًا',
+    en: 'An unexpected error occurred, please try again later',
+  },
+  [AUTH_ERROR_CODES.CANNOT_DISABLE_SELF]: {
+    ar: 'لا يمكنك تعطيل حسابك الخاص أثناء تسجيل دخولك',
+    en: 'You cannot disable your own account while logged in',
+  },
+  [AUTH_ERROR_CODES.INCORRECT_PASSWORD]: {
+    ar: 'كلمة المرور الحالية غير صحيحة',
+    en: 'The current password is incorrect',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_NOT_ACTIVE]: {
+    ar: 'الحساب غير نشط',
+    en: 'The account is not active',
+  },
+    [OTP_ERROR_CODES.OTP_EXPIRED]: {
+    ar: 'انتهت صلاحية رمز التحقق',
+    en: 'Verification code has expired',
+  },
+  [OTP_ERROR_CODES.OTP_INVALID]: {
+    ar: 'رمز التحقق غير صحيح',
+    en: 'Invalid verification code',
+  },
+  [OTP_ERROR_CODES.OTP_MAX_ATTEMPTS]: {
+    ar: 'تم تجاوز الحد الأقصى لمحاولات التحقق',
+    en: 'Maximum verification attempts exceeded',
+  },
+  [OTP_ERROR_CODES.OTP_ALREADY_USED]: {
+    ar: 'رمز التحقق مستخدم مسبقًا',
+    en: 'Verification code has already been used',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED]: {
+    ar: 'هذا الحساب ليس بحالة دعوة',
+    en: 'This account is not in invited status',
+  },
+  [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
+    ar: 'كلمتا المرور غير متطابقتين',
+    en: 'Passwords do not match',
+  },
+};
+
+const DEFAULT_LANGUAGE: Language = 'ar';
+
+export function translate(code: string, lang: Language = DEFAULT_LANGUAGE): string {
+  return (
+  MESSAGES[code]?.[lang] ??
+  MESSAGES[ERROR_CODES.INTERNAL_ERROR][lang]
+);
+}
+
+// Resolves the preferred language from an Accept-Language header, falling
+// back to Arabic since it's the primary language per the SRS (RTL, CR-1).
+export function resolveLanguageFromHeader(header?: string): Language {
+  if (header?.toLowerCase().startsWith('en')) return 'en';
+  return 'ar';
+}

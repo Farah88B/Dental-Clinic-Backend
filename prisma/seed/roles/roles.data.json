@@ -1,0 +1,21 @@
+[
+  {
+    "code": "DOCTOR",
+    "nameAr": "طبيب",
+    "nameEn": "Doctor",
+    "descriptionAr": "يمتلك جميع صلاحيات النظام",
+    "descriptionEn": "Has all system permissions"
+  },
+  {
+    "code": "SECRETARY",
+    "nameAr": "سكرتيرة",
+    "nameEn": "Secretary",
+    "descriptionAr": "إدارة المرضى والمواعيد بدون صلاحيات مالية أو علاجية",
+    "descriptionEn": "Manages patients and appointments without medical or financial permissions"
+  },
+  {
+    "code": "PATIENT",
+    "nameAr": "مريض",
+    "nameEn": "Patient"
+  }
+]

@@ -1,0 +1,185 @@
+[
+  {
+    "code": "manage_roles",
+    "nameAr": "إدارة الأدوار",
+    "nameEn": "Manage Roles",
+    "order": 1
+  },
+  {
+    "code": "assign_role_permissions",
+    "nameAr": "تعيين صلاحيات الأدوار",
+    "nameEn": "Assign Role Permissions",
+    "order": 2
+  },
+  {
+    "code": "manage_staff",
+    "nameAr": "إدارة المستخدمين الداخليين",
+    "nameEn": "Manage Staff",
+    "order": 3
+  },
+
+  {
+    "code": "view_patients",
+    "nameAr": "عرض المرضى",
+    "nameEn": "View Patients",
+    "order": 4
+  },
+  {
+    "code": "search_patients",
+    "nameAr": "البحث عن المرضى",
+    "nameEn": "Search Patients",
+    "order": 5
+  },
+  {
+    "code": "create_patient",
+    "nameAr": "إنشاء ملف مريض",
+    "nameEn": "Create Patient",
+    "order": 6
+  },
+  {
+    "code": "update_patient",
+    "nameAr": "تعديل بيانات المريض",
+    "nameEn": "Update Patient",
+    "order": 7
+  },
+  {
+    "code": "archive_patient",
+    "nameAr": "أرشفة ملف المريض",
+    "nameEn": "Archive Patient",
+    "order": 8
+  },
+  {
+    "code": "link_patient_account",
+    "nameAr": "ربط/نقل ملكية حساب مريض",
+    "nameEn": "Link or Transfer Patient Account Ownership",
+    "order": 9
+  },
+
+  {
+    "code": "view_appointments",
+    "nameAr": "عرض المواعيد",
+    "nameEn": "View Appointments",
+    "order": 10
+  },
+  {
+    "code": "create_appointment",
+    "nameAr": "إنشاء موعد",
+    "nameEn": "Create Appointment",
+    "order": 11
+  },
+  {
+    "code": "update_appointment",
+    "nameAr": "تعديل موعد",
+    "nameEn": "Update Appointment",
+    "order": 12
+  },
+  {
+    "code": "cancel_appointment",
+    "nameAr": "إلغاء موعد",
+    "nameEn": "Cancel Appointment",
+    "order": 13
+  },
+  {
+    "code": "bulk_postpone_appointments",
+    "nameAr": "تأجيل جماعي لمواعيد يوم كامل",
+    "nameEn": "Bulk Postpone a Day's Appointments",
+    "order": 14
+  },
+  {
+    "code": "manage_schedule",
+    "nameAr": "إدارة جدول الدوام",
+    "nameEn": "Manage Schedule",
+    "order": 15
+  },
+
+  {
+    "code": "view_medical_records",
+    "nameAr": "عرض السجل الطبي",
+    "nameEn": "View Medical Records",
+    "order": 16
+  },
+  {
+    "code": "manage_medical_records",
+    "nameAr": "إدارة السجل الطبي",
+    "nameEn": "Manage Medical Records",
+    "order": 17
+  },
+  {
+    "code": "create_treatment_plan",
+    "nameAr": "إنشاء خطة علاجية",
+    "nameEn": "Create Treatment Plan",
+    "order": 18
+  },
+  {
+    "code": "manage_treatment_sessions",
+    "nameAr": "إدارة جلسات العلاج",
+    "nameEn": "Manage Treatment Sessions",
+    "order": 19
+  },
+
+  {
+    "code": "view_invoices",
+    "nameAr": "عرض الفواتير",
+    "nameEn": "View Invoices",
+    "order": 20
+  },
+  {
+    "code": "create_invoice",
+    "nameAr": "إنشاء فاتورة",
+    "nameEn": "Create Invoice",
+    "order": 21
+  },
+  {
+    "code": "record_payment",
+    "nameAr": "تسجيل دفعة",
+    "nameEn": "Record Payment",
+    "order": 22
+  },
+
+  {
+    "code": "manage_inventory",
+    "nameAr": "إدارة المخزون",
+    "nameEn": "Manage Inventory",
+    "order": 23
+  },
+
+  {
+    "code": "manage_content",
+    "nameAr": "إدارة المحتوى",
+    "nameEn": "Manage Content",
+    "order": 24
+  },
+
+  {
+    "code": "view_statistics",
+    "nameAr": "عرض الإحصائيات",
+    "nameEn": "View Statistics",
+    "order": 25
+  },
+  {
+    "code": "view_financial_reports",
+    "nameAr": "عرض التقارير المالية",
+    "nameEn": "View Financial Reports",
+    "order": 26
+  },
+  {
+    "code": "export_reports",
+    "nameAr": "تصدير التقارير",
+    "nameEn": "Export Reports",
+    "order": 27
+  },
+
+  {
+    "code": "view_notifications",
+    "nameAr": "عرض الإشعارات",
+    "nameEn": "View Notifications",
+    "order": 28
+  },
+
+  {
+    "code": "manage_clinic_settings",
+    "nameAr": "إدارة إعدادات العيادة",
+    "nameEn": "Manage Clinic Settings",
+    "order": 29
+  }
+]
