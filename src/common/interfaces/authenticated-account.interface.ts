@@ -7,6 +7,7 @@ export interface AuthenticatedAccount {
   id: number;
 
   phone: string;
+  preferredLanguage: 'ar' | 'en';
 
   roles: {
     id: number;

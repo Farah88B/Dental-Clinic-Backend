@@ -36,7 +36,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     const roles = await this.accountRolesService.getAuthenticatedAccountPayload(account.id);
 
-    return { id: account.id, phone: account.phone, roles };
+    return {
+      id: account.id,
+      phone: account.phone,
+      preferredLanguage: account.preferredLanguage.toLowerCase() as 'ar' | 'en',
+      roles,
+    };
   }
 }
 

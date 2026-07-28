@@ -24,6 +24,7 @@ import { CompleteActivationDto } from '../dto/complete-activation.dto';
 import { CreatePatientAccountDto } from '../dto/create-patient-account.dto';
 import { ActivationRequiredDto } from '../dto/activation-required.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
+import { SetLanguageDto } from '../dto/update-preferences.dto';
 const PATIENT_ROLE_CODE = 'PATIENT';
 
 @Injectable()
@@ -54,16 +55,27 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
     // PENDING_ACTIVATION: incomplete registration — resend OTP instead of
     // creating a second row (which would hit the unique constraint anyway).
     const password = await hashPassword(dto.password); // allow changing password on retry
-    await this.prisma.account.update({ where: { id: existing.id }, data: { password } });
-    await this.otpService.send(existing.id, dto.phone, OtpType.REGISTER);
+    await this.prisma.account.update({
+      where: { id: existing.id },
+      data: {
+        password,
+        preferredLanguage: (dto.language ?? 'ar').toUpperCase() as 'AR' | 'EN',
+      },
+    });
+    await this.otpService.send(existing.id, dto.phone, OtpType.ACCOUNT_ACTIVATION);
     return { accountId: existing.id };
   }
 
   const password = await hashPassword(dto.password);
   const account = await this.prisma.account.create({
-    data: { phone: dto.phone, password, status: 'PENDING_ACTIVATION' },
+    data: {
+      phone: dto.phone,
+      password,
+      status: 'PENDING_ACTIVATION',
+      preferredLanguage: (dto.language ?? 'ar').toUpperCase() as 'AR' | 'EN',
+    },
   });
-  await this.otpService.send(account.id, dto.phone, OtpType.REGISTER);
+  await this.otpService.send(account.id, dto.phone, OtpType.ACCOUNT_ACTIVATION);
   return { accountId: account.id };
 }
 
@@ -73,7 +85,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
       where: { phone: dto.phone },
     });
 
-    await this.otpService.verify(account.id, OtpType.REGISTER, dto.code);
+    await this.otpService.verify(account.id, OtpType.ACCOUNT_ACTIVATION, dto.code);
 
     const patientRole = await this.prisma.role.findUniqueOrThrow({
       where: { code: PATIENT_ROLE_CODE },
@@ -93,7 +105,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
   }
 
   // عدّلي login() بالكامل لتصير:
-async login(dto: LoginDto): Promise<TokenPairDto | ActivationRequiredDto> {
+async login(dto: LoginDto): Promise<TokenPairDto> {
   const account = await this.prisma.account.findUnique({ where: { phone: dto.phone } });
 
   if (!account || !account.password) {
@@ -109,7 +121,10 @@ async login(dto: LoginDto): Promise<TokenPairDto | ActivationRequiredDto> {
     // Correct temp password on an INVITED account — patient must complete
     // activation before getting a real token pair.
     const temporaryToken = this.tokenService.issueActivationToken(account.id);
-    return new ActivationRequiredDto(temporaryToken);
+      return new TokenPairDto({
+      activationRequired: true,
+      temporaryToken,
+    });
   }
 
   if (account.status !== 'ACTIVE') {
@@ -199,7 +214,8 @@ DISABLED (لاحقًا، من الأدمن)
   }
   private async buildAuthenticatedResponse(accountId: number, phone: string, status: AccountStatus) {
     const roles = await this.accountRolesService.getAuthenticatedAccountPayload(accountId);
-    const tokenPair = this.tokenService.issueTokenPair({ id: accountId, phone, roles }, status);
+    const account = await this.prisma.account.findUniqueOrThrow({ where: { id: accountId }, select: { preferredLanguage: true } });
+    const tokenPair = this.tokenService.issueTokenPair({ id: accountId, phone, preferredLanguage: account.preferredLanguage.toLowerCase() as 'ar' | 'en', roles }, status);
     return new TokenPairDto({ ...tokenPair, accountStatus: status });
   }
   // NOTE: stateless refresh (no RefreshToken table) — see the Epic 3 opening
@@ -288,7 +304,7 @@ async startInvitationActivation(phone: string): Promise<void> {
   if (account.status !== 'INVITED') {
     throw new BadRequestException('ACCOUNT_NOT_INVITED');
   }
-  await this.otpService.send(account.id, phone, OtpType.REGISTER); // reuse REGISTER type
+  await this.otpService.send(account.id, phone, OtpType.ACCOUNT_ACTIVATION); // reuse ACCOUNT_ACTIVATION type
 }
 
 async activateInvitation(dto: ActivateInvitationDto) {
@@ -297,7 +313,7 @@ async activateInvitation(dto: ActivateInvitationDto) {
       throw new BadRequestException('ACCOUNT_NOT_INVITED');
     }
 
-    await this.otpService.verify(account.id, OtpType.REGISTER, dto.code);
+    await this.otpService.verify(account.id, OtpType.ACCOUNT_ACTIVATION, dto.code);
 
     const password = await hashPassword(dto.password);
     await this.prisma.account.update({
@@ -323,6 +339,16 @@ async activateInvitation(dto: ActivateInvitationDto) {
     await this.prisma.account.update({
       where: { id: accountId },
       data: { password },
+    });
+  }
+
+  async setLanguage(accountId: number, dto: SetLanguageDto) {
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: {
+        preferredLanguage: dto.language.toUpperCase() as 'AR' | 'EN',
+      },
+      select: { preferredLanguage: true },
     });
   }
 

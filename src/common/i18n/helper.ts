@@ -79,6 +79,10 @@ const MESSAGES: Record<string, Record<Language, string>> = {
 
 const DEFAULT_LANGUAGE: Language = 'ar';
 
+// أضيفي هالدالة جنب translate() الموجودة:
+export function isKnownErrorCode(code: string): boolean {
+  return code in MESSAGES;
+}
 export function translate(code: string, lang: Language = DEFAULT_LANGUAGE): string {
   return (
   MESSAGES[code]?.[lang] ??
@@ -91,4 +95,21 @@ export function translate(code: string, lang: Language = DEFAULT_LANGUAGE): stri
 export function resolveLanguageFromHeader(header?: string): Language {
   if (header?.toLowerCase().startsWith('en')) return 'en';
   return 'ar';
+}
+
+export function resolveLanguageFromRequest(request: {
+  headers?: Record<string, string | string[] | undefined>;
+  user?: { preferredLanguage?: string };
+}): Language {
+  const preferredLanguage = request.user?.preferredLanguage?.toLowerCase();
+
+  if (preferredLanguage === 'en' || preferredLanguage === 'ar') {
+    return preferredLanguage;
+  }
+
+  return resolveLanguageFromHeader(
+    Array.isArray(request.headers?.['accept-language'])
+      ? request.headers['accept-language'][0]
+      : request.headers?.['accept-language'],
+  );
 }

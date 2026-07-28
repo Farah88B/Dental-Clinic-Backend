@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -23,6 +23,7 @@ import { TokenPairDto } from '../dto/token-pair.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { CompleteActivationDto } from '../dto/complete-activation.dto';
 import { CreatePatientAccountDto } from '../dto/create-patient-account.dto';
+import { SetLanguageDto } from '../dto/update-preferences.dto';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiBaseUnionResponse } from 'src/common/decorators/api-base-union-response.decorator';
 
@@ -64,6 +65,14 @@ export class AuthSharedController {
   @ApiOperation({ summary: 'Change password for logged-in ACTIVE account (requires current password) — مشترك' })
   changePassword(@ReqUser('id') accountId: number, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(accountId, dto);
+  }
+
+  @ApiBearerAuth('JWT')
+  @UseGuards(JwtAuthGuard)
+  @Patch('language')
+  @ApiOperation({ summary: 'Update the authenticated account language — مشترك' })
+  setLanguage(@ReqUser('id') accountId: number, @Body() dto: SetLanguageDto) {
+    return this.authService.setLanguage(accountId, dto);
   }
 }
 
