@@ -29,7 +29,8 @@
     "@nestjs/swagger": "^11.4.6",
     "@nestjs/terminus": "^11.1.1",
     "@nestjs/throttler": "^6.5.0",
-    "@prisma/client": "^6.16.2", 
+    "@prisma/client": "^6.16.2",
+    "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.3.0",
@@ -51,6 +52,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
@@ -72,24 +74,23 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
- "jest": {
-  "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-  ],
-  "rootDir": ".",
-  "testRegex": ".*\\.spec\\.ts$",
-  "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
+    },
+    "testEnvironment": "node"
   },
-  "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/src/$1"
-  },
-  "testEnvironment": "node"
-},
-
-"prisma": {
-  "seed": "ts-node prisma/seed/seed.ts"
-}
+  "prisma": {
+    "seed": "ts-node prisma/seed/seed.ts"
+  }
 }

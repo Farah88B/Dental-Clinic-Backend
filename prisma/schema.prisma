@@ -88,6 +88,16 @@ model Account {
 
   createdAccounts Account[] @relation("AccountCreator")
 
+  patients Patient[]
+
+  createdPatients Patient[] @relation("PatientCreator")
+
+  createdPatientFormFieldDefinitions PatientFormFieldDefinition[] @relation("PatientFormFieldCreator")
+
+  updatedPatientFormFieldValues PatientFormFieldValue[] @relation("PatientFormFieldValueUpdater")
+
+  uploadedMediaFiles MediaFile[]
+
   updatedClinicSettings ClinicSettings? @relation("ClinicSettingsUpdater")
 
   roles AccountRole[]
@@ -157,4 +167,137 @@ model ClinicSettings {
   updatedBy          Account? @relation("ClinicSettingsUpdater", fields: [updatedByAccountId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+enum PatientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum PatientFormFieldType {
+  TEXT
+  NUMBER
+  DATE
+  RADIO
+  MULTI_SELECT
+  TEXTAREA
+}
+enum Gender {
+  MALE
+  FEMALE
+}
+model Patient {
+
+  id Int @id @default(autoincrement())
+
+  accountId Int?
+  account Account? @relation(fields: [accountId], references: [id])
+
+  createdById Int?
+  createdBy Account? @relation("PatientCreator", fields: [createdById], references: [id])
+
+  medicalRecordNumber String @unique
+  
+  fullName String
+  birthDate DateTime @db.Date
+  gender Gender
+
+  lastVisitAt DateTime?
+
+  profileImageId Int?
+  profileImage MediaFile? @relation(fields: [profileImageId], references: [id])
+
+  status PatientStatus @default(ACTIVE)
+  archivedAt DateTime?
+
+  formValues PatientFormFieldValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([fullName])
+  @@index([lastVisitAt])
+  @@index([fullName, birthDate, gender])
+  @@index([profileImageId])
+  @@index([accountId])
+
+}
+model PatientFormFieldDefinition {
+
+  id Int @id @default(autoincrement())
+
+  key String @unique
+
+  labelAr String
+  labelEn String
+
+  type PatientFormFieldType
+
+  required Boolean @default(false)
+
+  validation Json?
+  options Json?
+
+  displayOrder Int
+  isActive Boolean @default(true)
+
+  createdById Int
+  createdBy Account  @relation("PatientFormFieldCreator", fields: [createdById], references: [id])
+
+  values PatientFormFieldValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+
+}
+model PatientFormFieldValue {
+
+  id Int @id @default(autoincrement())
+
+  patientId Int
+  patient Patient  @relation(fields: [patientId], references: [id])
+
+  fieldDefinitionId Int
+  fieldDefinition PatientFormFieldDefinition  @relation(fields: [fieldDefinitionId], references: [id])
+
+  value Json
+
+  updatedByAccountId Int?
+
+  updatedByAccount Account?  @relation("PatientFormFieldValueUpdater", fields: [updatedByAccountId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientId, fieldDefinitionId])
+  @@index([patientId])
+  @@index([fieldDefinitionId])
+
+}
+model MediaFile {
+
+  id Int @id @default(autoincrement())
+
+  originalName String
+  path String  @unique
+  mimeType String
+  size Int
+
+  uploadedByAccountId Int?
+  uploadedByAccount Account?  @relation(fields: [uploadedByAccountId], references: [id])
+
+  patientProfile Patient[]  
+
+ // medicalAttachments MedicalAttachment[]
+
+ // contentMedia ContentMediaFile[]
+
+  createdAt DateTime @default(now())
+
+  @@index([uploadedByAccountId])
+  @@index([mimeType])
+  @@index([createdAt])
+
 }
