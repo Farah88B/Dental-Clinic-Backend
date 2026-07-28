@@ -15,6 +15,7 @@ from "./accounts/account.seed";
 import * as PermissionSeed from "./permissions/permission.seed";
 import { upsertClinicSettings } from "./clinic-settings/clinic-settings.seed";
 
+import { upsertDefaultPatientFormFields } from "./patient-form-fields/patient-form-field.seed";
 
 const prisma = new PrismaService();
 
@@ -28,6 +29,8 @@ async function main(){
  await upsertRolePermissions(prisma);
 
  await upsertDefaultAccounts(prisma);
+    
+ await upsertDefaultPatientFormFields(prisma); 
 
  await upsertClinicSettings(prisma);
 

@@ -23,6 +23,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClinicSettingsModule } from './modules/clinic-setting/clinic-settings.module';
+import { PatientFormModule } from './modules/patient-form/patient-form.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ClinicSettingsModule } from './modules/clinic-setting/clinic-settings.m
      AccountsModule,
      AuthModule,
      ClinicSettingsModule,
+      PatientFormModule,
   ],
   controllers: [AppController],
 providers: [

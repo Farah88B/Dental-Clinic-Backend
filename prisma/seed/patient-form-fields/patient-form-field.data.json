@@ -1,0 +1,34 @@
+[
+  {
+    "key": "chronic_diseases",
+    "labelAr": "الأمراض المزمنة",
+    "labelEn": "Chronic Diseases",
+    "type": "MULTI_SELECT",
+    "required": false,
+    "validation": null,
+    "displayOrder": 1,
+    "options": [
+      { "value": "diabetes", "labelAr": "سكري", "labelEn": "Diabetes", "isActive": true },
+      { "value": "hypertension", "labelAr": "ضغط الدم", "labelEn": "Hypertension", "isActive": true },
+      { "value": "heart_disease", "labelAr": "أمراض القلب", "labelEn": "Heart Disease", "isActive": true },
+      { "value": "asthma", "labelAr": "ربو", "labelEn": "Asthma", "isActive": true },
+      { "value": "kidney_disease", "labelAr": "أمراض الكلى", "labelEn": "Kidney Disease", "isActive": true },
+      { "value": "thyroid_disorder", "labelAr": "اضطراب الغدة الدرقية", "labelEn": "Thyroid Disorder", "isActive": true }
+    ]
+  },
+  {
+    "key": "allergies",
+    "labelAr": "الحساسية",
+    "labelEn": "Allergies",
+    "type": "MULTI_SELECT",
+    "required": false,
+    "validation": null,
+    "displayOrder": 2,
+    "options": [
+      { "value": "penicillin", "labelAr": "البنسلين", "labelEn": "Penicillin", "isActive": true },
+      { "value": "local_anesthesia", "labelAr": "التخدير الموضعي", "labelEn": "Local Anesthesia", "isActive": true },
+      { "value": "latex", "labelAr": "اللاتكس", "labelEn": "Latex", "isActive": true },
+      { "value": "aspirin", "labelAr": "الأسبرين", "labelEn": "Aspirin", "isActive": true }
+    ]
+  }
+]

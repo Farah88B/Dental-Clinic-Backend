@@ -181,5 +181,11 @@
     "nameAr": "إدارة إعدادات العيادة",
     "nameEn": "Manage Clinic Settings",
     "order": 29
+  },
+  {
+    "code": "manage_patient_form_fields",
+    "nameAr": "إدارة حقول نموذج المريض",
+    "nameEn": "Manage Patient Form Fields",
+    "order": 30
   }
 ]
