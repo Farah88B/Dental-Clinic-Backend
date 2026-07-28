@@ -7,7 +7,7 @@ import { VerifyOtpDto } from '../dto/verify-otp.dto';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 
 // Generic OTP endpoints, kept separate from AuthController's flow-specific
-// ones (register/reset-password/change-phone) — this pair is for any FUTURE
+// ones (account activation/reset-password/change-phone) — this pair is for any FUTURE
 // standalone OTP need that doesn't fit those three flows.
 @ApiTags('OTP')
 @Controller('otp')

@@ -45,11 +45,12 @@ export class TokenService {
       },
     );
 
-    return new TokenPairDto({
-      accessToken,
-      refreshToken,
-      accountStatus,
-    });
+ return new TokenPairDto({
+    accessToken,
+    refreshToken,
+    accountStatus,
+    activationRequired: false,
+});
   }
 
   verifyRefreshToken(token: string): { sub: number } {

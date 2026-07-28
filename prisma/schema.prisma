@@ -19,6 +19,10 @@ enum AccountStatus {
   INVITED
 }
 
+enum AppLanguage {
+  AR
+  EN
+}
 
 model Role {
   id Int @id @default(autoincrement())
@@ -75,6 +79,7 @@ model Account {
   status AccountStatus @default(PENDING_ACTIVATION)
 
   biometricEnabled Boolean @default(false)
+  preferredLanguage AppLanguage @default(AR)
 
   phoneVerifiedAt DateTime?
 
@@ -138,6 +143,7 @@ model OtpVerification {
 enum OtpType {
   REGISTER
   LOGIN
+  ACCOUNT_ACTIVATION
   RESET_PASSWORD
   CHANGE_PHONE
 }

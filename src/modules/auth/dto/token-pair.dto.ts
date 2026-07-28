@@ -3,10 +3,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { AccountStatus } from '@prisma/client';
 
 export class TokenPairDto {
-  @ApiProperty() accessToken!: string;
-  @ApiProperty() refreshToken!: string;
-  @ApiProperty({ enum: AccountStatus }) accountStatus!: AccountStatus;
-  constructor(partial: TokenPairDto) {
-    Object.assign(this, partial);
+
+  @ApiProperty({ required: false })
+  accessToken?: string;
+
+  @ApiProperty({ required: false })
+  refreshToken?: string;
+
+  @ApiProperty({ enum: AccountStatus, required: false })
+  accountStatus?: AccountStatus;
+
+  @ApiProperty()
+  activationRequired!: boolean;
+
+  @ApiProperty({ required: false })
+  temporaryToken?: string;
+
+  constructor(partial: Partial<TokenPairDto>) {
+      Object.assign(this, partial);
   }
 }
