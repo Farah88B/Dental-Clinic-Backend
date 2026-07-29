@@ -191,6 +191,10 @@ enum Gender {
   MALE
   FEMALE
 }
+model MedicalRecordNumberCounter {
+  id Int @id
+  lastValue Int @default(0)
+}
 model Patient {
 
   id Int @id @default(autoincrement())
