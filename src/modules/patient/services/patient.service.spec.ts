@@ -19,7 +19,12 @@ describe('PatientService', () => {
     required: true,
     validation: { minItems: 1 },
     options: [
-      { value: 'diabetes', labelAr: 'سكري', labelEn: 'Diabetes', isActive: true },
+      {
+        value: 'diabetes',
+        labelAr: 'سكري',
+        labelEn: 'Diabetes',
+        isActive: true,
+      },
       { value: 'asthma', labelAr: 'ربو', labelEn: 'Asthma', isActive: false },
     ],
     displayOrder: 1,
@@ -56,7 +61,10 @@ describe('PatientService', () => {
         PatientFormSchemaAdapter,
         PatientFormValidationService,
         { provide: PrismaService, useValue: prisma },
-        { provide: MedicalRecordNumberService, useValue: medicalRecordNumberService },
+        {
+          provide: MedicalRecordNumberService,
+          useValue: medicalRecordNumberService,
+        },
       ],
     }).compile();
 
@@ -67,7 +75,9 @@ describe('PatientService', () => {
   });
 
   it('projects the active schema into the authenticated language', async () => {
-    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([activeDefinition]);
+    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([
+      activeDefinition,
+    ]);
 
     const result = await service.getFormSchema('en');
 
@@ -84,7 +94,9 @@ describe('PatientService', () => {
   });
 
   it('does not create a patient when a similar patient already exists', async () => {
-    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([activeDefinition]);
+    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([
+      activeDefinition,
+    ]);
     prisma.patient.findMany.mockResolvedValue([{ id: 9 }]);
 
     await expect(
@@ -97,13 +109,17 @@ describe('PatientService', () => {
         },
         appContext,
       ),
-    ).rejects.toMatchObject({ response: { message: ERROR_CODES.PATIENT_DUPLICATE } });
+    ).rejects.toMatchObject({
+      response: { message: ERROR_CODES.PATIENT_DUPLICATE },
+    });
 
     expect(prisma.patient.create).not.toHaveBeenCalled();
   });
 
   it('rejects an unknown dynamic field key', async () => {
-    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([activeDefinition]);
+    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([
+      activeDefinition,
+    ]);
 
     await expect(
       service.create(
@@ -115,11 +131,15 @@ describe('PatientService', () => {
         },
         appContext,
       ),
-    ).rejects.toMatchObject({ response: { message: ERROR_CODES.PATIENT_FORM_UNKNOWN_FIELD } });
+    ).rejects.toMatchObject({
+      response: { message: ERROR_CODES.PATIENT_FORM_UNKNOWN_FIELD },
+    });
   });
 
   it('rejects inactive options', async () => {
-    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([activeDefinition]);
+    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([
+      activeDefinition,
+    ]);
 
     await expect(
       service.create(
@@ -131,11 +151,15 @@ describe('PatientService', () => {
         },
         appContext,
       ),
-    ).rejects.toMatchObject({ response: { message: ERROR_CODES.PATIENT_FORM_INACTIVE_OPTION } });
+    ).rejects.toMatchObject({
+      response: { message: ERROR_CODES.PATIENT_FORM_INACTIVE_OPTION },
+    });
   });
 
   it('creates the patient and dynamic values in one transaction', async () => {
-    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([activeDefinition]);
+    prisma.patientFormFieldDefinition.findMany.mockResolvedValue([
+      activeDefinition,
+    ]);
     prisma.patient.findMany.mockResolvedValue([]);
     prisma.patient.create.mockResolvedValue({
       id: 7,
@@ -144,7 +168,9 @@ describe('PatientService', () => {
       birthDate: new Date('1990-01-31'),
       gender: 'MALE',
       status: 'ACTIVE',
-      formValues: [{ value: ['diabetes'], fieldDefinition: { key: 'chronic_diseases' } }],
+      formValues: [
+        { value: ['diabetes'], fieldDefinition: { key: 'chronic_diseases' } },
+      ],
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     });
@@ -167,12 +193,20 @@ describe('PatientService', () => {
           createdById: 5,
           status: 'ACTIVE',
           formValues: {
-            create: [{ fieldDefinitionId: 1, value: ['diabetes'], updatedByAccountId: 5 }],
+            create: [
+              {
+                fieldDefinitionId: 1,
+                value: ['diabetes'],
+                updatedByAccountId: 5,
+              },
+            ],
           },
         }),
       }),
     );
     expect(medicalRecordNumberService.generate).toHaveBeenCalledWith(prisma);
-    expect(result.formValues).toEqual([{ key: 'chronic_diseases', value: ['diabetes'] }]);
+    expect(result.formValues).toEqual([
+      { key: 'chronic_diseases', value: ['diabetes'] },
+    ]);
   });
 });

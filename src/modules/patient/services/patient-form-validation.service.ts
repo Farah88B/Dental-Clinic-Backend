@@ -109,20 +109,30 @@ export class PatientFormValidationService {
         this.validateOption(value, definition.options);
         return;
       case PatientFormFieldType.MULTI_SELECT:
-        if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+        if (
+          !Array.isArray(value) ||
+          value.some((item) => typeof item !== 'string')
+        ) {
           throw new BadRequestException(ERROR_CODES.PATIENT_FORM_INVALID_VALUE);
         }
         if (new Set(value).size !== value.length) {
           throw new BadRequestException(ERROR_CODES.PATIENT_FORM_INVALID_VALUE);
         }
         this.validateArrayRules(value, definition.validation);
-        value.forEach((option) => this.validateOption(option, definition.options));
+        value.forEach((option) =>
+          this.validateOption(option, definition.options),
+        );
         return;
     }
   }
 
-  private validateOption(value: string, options: Prisma.JsonValue | null): void {
-    const option = this.getOptions(options).find((item) => item.value === value);
+  private validateOption(
+    value: string,
+    options: Prisma.JsonValue | null,
+  ): void {
+    const option = this.getOptions(options).find(
+      (item) => item.value === value,
+    );
     if (!option) {
       throw new BadRequestException(ERROR_CODES.PATIENT_FORM_INVALID_VALUE);
     }
@@ -131,18 +141,25 @@ export class PatientFormValidationService {
     }
   }
 
-  private validateTextRules(value: string, validation: Prisma.JsonValue | null): void {
+  private validateTextRules(
+    value: string,
+    validation: Prisma.JsonValue | null,
+  ): void {
     const rules = this.getValidation(validation);
     if (
       (typeof rules.minLength === 'number' && value.length < rules.minLength) ||
       (typeof rules.maxLength === 'number' && value.length > rules.maxLength) ||
-      (typeof rules.pattern === 'string' && !new RegExp(rules.pattern).test(value))
+      (typeof rules.pattern === 'string' &&
+        !new RegExp(rules.pattern).test(value))
     ) {
       throw new BadRequestException(ERROR_CODES.PATIENT_FORM_INVALID_VALUE);
     }
   }
 
-  private validateNumberRules(value: number, validation: Prisma.JsonValue | null): void {
+  private validateNumberRules(
+    value: number,
+    validation: Prisma.JsonValue | null,
+  ): void {
     const rules = this.getValidation(validation);
     if (
       (typeof rules.min === 'number' && value < rules.min) ||
@@ -153,7 +170,10 @@ export class PatientFormValidationService {
     }
   }
 
-  private validateDateRules(value: string, validation: Prisma.JsonValue | null): void {
+  private validateDateRules(
+    value: string,
+    validation: Prisma.JsonValue | null,
+  ): void {
     const rules = this.getValidation(validation);
     if (
       (typeof rules.min === 'string' && value < rules.min) ||
@@ -163,7 +183,10 @@ export class PatientFormValidationService {
     }
   }
 
-  private validateArrayRules(value: string[], validation: Prisma.JsonValue | null): void {
+  private validateArrayRules(
+    value: string[],
+    validation: Prisma.JsonValue | null,
+  ): void {
     const rules = this.getValidation(validation);
     if (
       (typeof rules.minItems === 'number' && value.length < rules.minItems) ||
@@ -178,13 +201,20 @@ export class PatientFormValidationService {
   }
 
   private getValidation(validation: Prisma.JsonValue | null): FieldValidation {
-    return validation && typeof validation === 'object' && !Array.isArray(validation)
-      ? (validation as FieldValidation)
+    return validation &&
+      typeof validation === 'object' &&
+      !Array.isArray(validation)
+      ? validation
       : {};
   }
 
   private isEmpty(value: unknown): boolean {
-    return value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
+    return (
+      value === null ||
+      value === undefined ||
+      value === '' ||
+      (Array.isArray(value) && value.length === 0)
+    );
   }
 
   private isValidDate(value: unknown): value is string {
@@ -194,6 +224,10 @@ export class PatientFormValidationService {
 
     const [year, month, day] = value.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
-    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+    return (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    );
   }
 }

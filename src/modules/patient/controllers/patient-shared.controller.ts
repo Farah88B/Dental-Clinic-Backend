@@ -14,7 +14,10 @@ export class PatientSharedController {
   constructor(private readonly patientService: PatientService) {}
 
   @Get('form/schema')
-  @ApiOperation({ summary: 'Get the active patient form schema - Used by: Patient Mobile App + Staff Dashboard' })
+  @ApiOperation({
+    summary:
+      'Get the active patient form schema - Used by: Patient Mobile App + Staff Dashboard',
+  })
   @ApiBaseResponse(PatientFormSchemaResponseDto)
   getFormSchema(@ReqUser('preferredLanguage') language: 'ar' | 'en') {
     return this.patientService.getFormSchema(language);
