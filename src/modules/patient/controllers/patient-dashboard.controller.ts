@@ -7,7 +7,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiPaginatedResponse } from 'src/common/decorators/api-paginated-response.decorator';
 import { AuditAction } from 'src/common/decorators/audit-user-action.decorator';
@@ -35,7 +40,7 @@ export class PatientDashboardController {
   constructor(private readonly patientService: PatientService) {}
 
   @Post()
-  @RequirePermission('manage_patients')
+  @RequirePermission('create_patient')
   @AuditAction('CREATE_PATIENT')
   @ApiOperation({
     summary: 'Create a patient profile - Used by: Staff Dashboard',
@@ -61,6 +66,37 @@ export class PatientDashboardController {
       'List patients with pagination, search, and filters - Used by: Staff Dashboard',
   })
   @ApiPaginatedResponse(PatientListResponseDto)
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enumName: 'PatientStatus',
+    enum: ['ACTIVE', 'ARCHIVED', 'INACTIVE'],
+  })
+  @ApiQuery({
+    name: 'gender',
+    required: false,
+    enumName: 'Gender',
+    enum: ['MALE', 'FEMALE'],
+  })
+  @ApiQuery({
+    name: 'lastVisitFrom',
+    required: false,
+    type: String,
+    description: 'ISO date string',
+  })
+  @ApiQuery({
+    name: 'lastVisitTo',
+    required: false,
+    type: String,
+    description: 'ISO date string',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['fullName', 'createdAt', 'lastVisitAt', 'medicalRecordNumber'],
+  })
+  @ApiQuery({ name: 'sortDirection', required: false, enum: ['asc', 'desc'] })
   list(@PaginationQuery() pagination: PatientListQueryDto) {
     return this.patientService.listPatients(pagination);
   }
