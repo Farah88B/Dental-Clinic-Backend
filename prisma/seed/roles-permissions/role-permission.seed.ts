@@ -20,6 +20,7 @@ const SECRETARY_PERMISSIONS = [
   'record_payment',              // ⬅ مضافة — نفس السبب
 
   'view_notifications',
+  'manage_patient_form_fields',
 ];
 
 

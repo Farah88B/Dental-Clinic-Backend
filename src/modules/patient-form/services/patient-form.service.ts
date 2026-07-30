@@ -14,6 +14,7 @@ import { UpdatePatientFormFieldDto } from '../dto/update-patient-form-field.dto'
 import { TogglePatientFormFieldStatusDto } from '../dto/toggle-patient-form-field-status.dto';
 import { ReorderPatientFormFieldsDto } from '../dto/reorder-patient-form-fields.dto';
 import { PatientFormFieldResponseDto } from '../dto/patient-form-field-response.dto';
+import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
 /**
  * Assumed shape for each entry inside the `options` Json column.
@@ -89,7 +90,7 @@ export class PatientFormService {
   ): Promise<PatientFormFieldResponseDto> {
     if (OPTION_BASED_TYPES.includes(dto.type) && !dto.options?.length) {
       throw new BadRequestException(
-        `Options are required for field type "${dto.type}"`,
+        ERROR_CODES.PATIENT_FORM_OPTIONS_REQUIRED,
       );
     }
 
@@ -163,7 +164,7 @@ export class PatientFormService {
       !this.hasOptions(existing.options)
     ) {
       throw new BadRequestException(
-        `Options are required for field type "${dto.type}"`,
+        ERROR_CODES.PATIENT_FORM_OPTIONS_REQUIRED,
       );
     }
 
@@ -219,7 +220,7 @@ export class PatientFormService {
     const uniqueIds = new Set(ids);
 
     if (uniqueIds.size !== ids.length) {
-      throw new BadRequestException('Duplicate field ids in reorder payload');
+      throw new BadRequestException(ERROR_CODES.PATIENT_FORM_DUPLICATE_FIELD_IDS);
     }
 
     const existing = await this.prisma.patientFormFieldDefinition.findMany({
@@ -228,7 +229,7 @@ export class PatientFormService {
     });
 
     if (existing.length !== uniqueIds.size) {
-      throw new BadRequestException('One or more field ids do not exist');
+      throw new BadRequestException(ERROR_CODES.PATIENT_FORM_FIELD_NOT_FOUND);
     }
 
     await this.prisma.$transaction(

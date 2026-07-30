@@ -39,6 +39,50 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'حدث خطأ غير متوقع، الرجاء المحاولة لاحقًا',
     en: 'An unexpected error occurred, please try again later',
   },
+  [ERROR_CODES.PATIENT_FORM_OPTIONS_REQUIRED]: {
+    ar: 'الخيارات مطلوبة لهذا النوع من حقول نموذج المريض',
+    en: 'Options are required for this patient form field type',
+  },
+  [ERROR_CODES.PATIENT_FORM_DUPLICATE_FIELD_IDS]: {
+    ar: 'يحتوي طلب ترتيب حقول نموذج المريض على معرّفات مكررة',
+    en: 'The patient form field reorder request contains duplicate field IDs',
+  },
+  [ERROR_CODES.PATIENT_FORM_FIELD_NOT_FOUND]: {
+    ar: 'حقل واحد أو أكثر من حقول نموذج المريض غير موجود',
+    en: 'One or more patient form fields do not exist',
+  },
+  [ERROR_CODES.PATIENT_FORM_FIELD_TYPE_IN_USE]: {
+    ar: 'لا يمكن تغيير نوع الحقل لأن بيانات المرضى تستخدمه بالفعل',
+    en: 'The field type cannot be changed because patient records already use it',
+  },
+  [ERROR_CODES.PATIENT_DUPLICATE]: {
+    ar: 'يوجد ملف طبي مشابه، يرجى مراجعة إدارة العيادة.',
+    en: 'A similar patient record already exists. Please contact the clinic.',
+  },
+  [ERROR_CODES.PATIENT_FORM_REQUIRED_FIELD]: {
+    ar: 'أحد الحقول المطلوبة في نموذج المريض مفقود',
+    en: 'A required patient form field is missing',
+  },
+  [ERROR_CODES.PATIENT_FORM_UNKNOWN_FIELD]: {
+    ar: 'يحتوي نموذج المريض على حقل غير معروف',
+    en: 'The patient form contains an unknown field',
+  },
+  [ERROR_CODES.PATIENT_FORM_INACTIVE_FIELD]: {
+    ar: 'يحتوي نموذج المريض على حقل غير نشط',
+    en: 'The patient form contains an inactive field',
+  },
+  [ERROR_CODES.PATIENT_FORM_DUPLICATE_FIELD_VALUE]: {
+    ar: 'يحتوي نموذج المريض على قيم مكررة للحقل نفسه',
+    en: 'The patient form contains duplicate values for the same field',
+  },
+  [ERROR_CODES.PATIENT_FORM_INVALID_VALUE]: {
+    ar: 'تحتوي بيانات نموذج المريض على قيمة غير صالحة',
+    en: 'The patient form contains an invalid value',
+  },
+  [ERROR_CODES.PATIENT_FORM_INACTIVE_OPTION]: {
+    ar: 'تحتوي بيانات نموذج المريض على خيار غير نشط',
+    en: 'The patient form contains an inactive option',
+  },
   [AUTH_ERROR_CODES.CANNOT_DISABLE_SELF]: {
     ar: 'لا يمكنك تعطيل حسابك الخاص أثناء تسجيل دخولك',
     en: 'You cannot disable your own account while logged in',
@@ -70,6 +114,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED]: {
     ar: 'هذا الحساب ليس بحالة دعوة',
     en: 'This account is not in invited status',
+  },
+  [ERROR_CODES.PATIENT_STATUS_ALREADY_EXISTS]: {
+    ar: 'المريض لديه هذه الحالة بالفعل',
+    en: 'Patient already has this status',
+  },
+  [ERROR_CODES.PATIENT_ARCHIVED_CANNOT_UPDATE]: {
+    ar: 'لا يمكن تعديل ملف مريض مؤرشف',
+    en: 'Cannot update an archived patient record',
   },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
