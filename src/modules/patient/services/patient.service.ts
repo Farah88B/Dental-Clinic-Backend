@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -16,6 +17,8 @@ import { PatientListQueryDto } from '../dto/patient-list-query.dto';
 import { PatientMyResponseDto } from '../dto/patient-my-response.dto';
 import { PatientDetailResponseDto } from '../dto/patient-detail-response.dto';
 import { PatientListResponseDto } from '../dto/patient-list-response.dto';
+import { UpdatePatientDto } from '../dto/update-patient.dto';
+import { UpdatePatientStatusDto } from '../dto/update-patient-status.dto';
 import {
   patientFormDefinitionSelect,
   patientSelect,
@@ -28,6 +31,11 @@ import { MedicalRecordNumberService } from './medical-record-number.service';
 import { PatientFormValidationService } from './patient-form-validation.service';
 
 type Language = 'ar' | 'en';
+
+export interface UpdatePatientContext {
+  source: 'APP' | 'DASHBOARD';
+  authenticatedAccountId: number;
+}
 
 export interface CreatePatientContext {
   source: 'APP' | 'DASHBOARD';
@@ -176,6 +184,96 @@ export class PatientService {
 
     const items = this.patientAdapter.fromArrayList(patients);
     return new AdminListDto(items, total);
+  }
+
+  async update(
+    patientId: number,
+    dto: UpdatePatientDto,
+    context: UpdatePatientContext,
+  ): Promise<PatientResponseDto> {
+    const patient = await this.prisma.patient.findUniqueOrThrow({
+      where: { id: patientId },
+      select: { id: true, status: true, accountId: true },
+    });
+
+    if (patient.status === 'ARCHIVED') {
+      throw new BadRequestException(ERROR_CODES.PATIENT_ARCHIVED_CANNOT_UPDATE);
+    }
+
+    if (context.source === 'APP' && patient.accountId !== context.authenticatedAccountId) {
+      throw new ForbiddenException();
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const definitions = await this.loadFieldDefinitions(tx);
+      const formValues = this.patientFormValidationService.validate(
+        dto.formValues ?? [],
+        definitions,
+      );
+
+      await tx.patient.update({
+        where: { id: patientId },
+        data: {
+          fullName: dto.fullName,
+          birthDate: dto.birthDate,
+          gender: dto.gender,
+        },
+      });
+
+      for (const fv of formValues) {
+        await tx.patientFormFieldValue.upsert({
+          where: {
+            patientId_fieldDefinitionId: {
+              patientId,
+              fieldDefinitionId: fv.fieldDefinitionId,
+            },
+          },
+          create: {
+            patientId,
+            fieldDefinitionId: fv.fieldDefinitionId,
+            value: fv.value,
+            updatedByAccountId: context.authenticatedAccountId,
+          },
+          update: {
+            value: fv.value,
+            updatedByAccountId: context.authenticatedAccountId,
+          },
+        });
+      }
+
+      return tx.patient.findUniqueOrThrow({
+        where: { id: patientId },
+        select: patientSelect(),
+      });
+    });
+
+    return this.patientAdapter.adapt(updated);
+  }
+
+  async updateStatus(
+    patientId: number,
+    dto: UpdatePatientStatusDto,
+    accountId: number,
+  ): Promise<PatientResponseDto> {
+    const patient = await this.prisma.patient.findUniqueOrThrow({
+      where: { id: patientId },
+      select: { id: true, status: true },
+    });
+
+    if (patient.status === dto.status) {
+      throw new BadRequestException(ERROR_CODES.PATIENT_STATUS_ALREADY_EXISTS);
+    }
+
+    const updated = await this.prisma.patient.update({
+      where: { id: patientId },
+      data: {
+        status: dto.status,
+        archivedAt: dto.status === 'ARCHIVED' ? new Date() : null,
+      },
+      select: patientSelect(),
+    });
+
+    return this.patientAdapter.adapt(updated);
   }
 
   async findDuplicatePatients(

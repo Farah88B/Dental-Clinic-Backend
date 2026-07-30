@@ -115,6 +115,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'هذا الحساب ليس بحالة دعوة',
     en: 'This account is not in invited status',
   },
+  [ERROR_CODES.PATIENT_STATUS_ALREADY_EXISTS]: {
+    ar: 'المريض لديه هذه الحالة بالفعل',
+    en: 'Patient already has this status',
+  },
+  [ERROR_CODES.PATIENT_ARCHIVED_CANNOT_UPDATE]: {
+    ar: 'لا يمكن تعديل ملف مريض مؤرشف',
+    en: 'Cannot update an archived patient record',
+  },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
     en: 'Passwords do not match',

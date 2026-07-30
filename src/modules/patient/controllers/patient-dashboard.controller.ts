@@ -4,12 +4,14 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -30,6 +32,8 @@ import { PatientResponseDto } from '../dto/patient-response.dto';
 import { PatientListResponseDto } from '../dto/patient-list-response.dto';
 import { PatientDetailResponseDto } from '../dto/patient-detail-response.dto';
 import { PatientListQueryDto } from '../dto/patient-list-query.dto';
+import { UpdatePatientDto } from '../dto/update-patient.dto';
+import { UpdatePatientStatusDto } from '../dto/update-patient-status.dto';
 import { PatientService } from '../services/patient.service';
 
 @ApiTags('Patients - Staff Dashboard')
@@ -71,7 +75,7 @@ export class PatientDashboardController {
     name: 'status',
     required: false,
     enumName: 'PatientStatus',
-    enum: ['ACTIVE', 'ARCHIVED', 'INACTIVE'],
+    enum: ['ACTIVE', 'ARCHIVED'],
   })
   @ApiQuery({
     name: 'gender',
@@ -115,5 +119,40 @@ export class PatientDashboardController {
       user.id,
       user.preferredLanguage,
     );
+  }
+
+  @Patch(':id')
+  @RequirePermission('update_patient')
+  @AuditAction('UPDATE_PATIENT_INFO')
+  @ApiOperation({
+    summary: 'Update patient profile - Used by: Staff Dashboard',
+  })
+  @ApiBaseResponse(PatientResponseDto)
+  @ApiParam({ name: 'id', type: Number })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePatientDto,
+    @ReqUser('id') accountId: number,
+  ) {
+    return this.patientService.update(id, dto, {
+      source: 'DASHBOARD',
+      authenticatedAccountId: accountId,
+    });
+  }
+
+  @Patch(':id/status')
+  @RequirePermission('archive_patient')
+  @AuditAction('UPDATE_PATIENT_STATUS')
+  @ApiOperation({
+    summary: 'Archive or restore a patient — Used by: Staff Dashboard',
+  })
+  @ApiBaseResponse(PatientResponseDto)
+  @ApiParam({ name: 'id', type: Number })
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePatientStatusDto,
+    @ReqUser('id') accountId: number,
+  ) {
+    return this.patientService.updateStatus(id, dto, accountId);
   }
 }
