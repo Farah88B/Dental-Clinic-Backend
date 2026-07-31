@@ -44,10 +44,14 @@ catch(exception: unknown, host: ArgumentsHost): void {
     const exceptionResponse = exception.getResponse();
 
     if (typeof exceptionResponse === 'string') {
-  
-      const code = isKnownErrorCode(exceptionResponse) ? exceptionResponse : ERROR_CODES.INTERNAL_ERROR;
+      const code =
+        isKnownErrorCode(exceptionResponse)
+          ? exceptionResponse
+          : statusCode === HttpStatus.TOO_MANY_REQUESTS
+            ? ERROR_CODES.RATE_LIMIT_EXCEEDED
+            : ERROR_CODES.INTERNAL_ERROR;
       message = translate(code, lang);   
-      error = 'Bad Request';
+      error = statusCode === HttpStatus.TOO_MANY_REQUESTS ? 'Too Many Requests' : 'Bad Request';
     } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const body = exceptionResponse as Record<string, any>;
       error = body.error ?? error;
@@ -62,6 +66,9 @@ catch(exception: unknown, host: ArgumentsHost): void {
       } else if (body.code) {
         // حالة: Exception اترمت أصلًا بـ {code, message} (متل PrismaHttpExceptionMapperService)
         message = translate(body.code, lang);
+      } else if (statusCode === HttpStatus.TOO_MANY_REQUESTS) {
+        message = translate(ERROR_CODES.RATE_LIMIT_EXCEEDED, lang);
+        error = 'Too Many Requests';
       } else {
         message = body.message ?? message;
       }

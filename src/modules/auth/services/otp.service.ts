@@ -17,6 +17,7 @@ export class OtpService {
     @Inject(OTP_CODE_GENERATOR) private readonly otpCodeGenerator: OtpCodeGenerator,
   ) {}
 
+  // Create and send a fresh OTP for a given account and OTP type.
   async send(accountId: number, phone: string, type: OtpType): Promise<void> {
     const code = this.otpCodeGenerator.generate();
     const expiresAt = new Date(Date.now() + OTP.EXPIRY_MINUTES * 60_000);
@@ -28,6 +29,7 @@ export class OtpService {
     await this.smsGateway.send(phone, `رمز التحقق الخاص بك: ${code}`);
   }
 
+  // Validate the latest OTP for the account/type and mark it used on success.
   async verify(accountId: number, type: OtpType, code: string): Promise<void> {
     const otp = await this.prisma.otpVerification.findFirst({
       where: { accountId, type },
@@ -55,6 +57,7 @@ export class OtpService {
     });
   }
 
+  // Send an OTP while storing extra JSON metadata for later use.
   async sendWithMetadata(
     accountId: number,
     phone: string,
@@ -71,6 +74,7 @@ export class OtpService {
     await this.smsGateway.send(phone, `رمز التحقق الخاص بك: ${code}`);
   }
 
+  // Validate the OTP and return the stored row, including metadata.
   async verifyAndReturnMetadata(accountId: number, type: OtpType, code: string) {
     const otp = await this.prisma.otpVerification.findFirst({
       where: { accountId, type },

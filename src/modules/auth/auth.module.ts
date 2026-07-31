@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthSharedController } from './controllers/auth.controller';
-import { AuthPatientAppController } from './controllers/auth.controller';
-import { AuthStaffController } from './controllers/auth.controller';
+import { AuthSharedController } from './controllers/auth.shared.controller';
+import { AuthPatientAppController } from './controllers/auth.patient.controller';
+import { AuthStaffController } from './controllers/auth.staff.controller';
+import { OtpController } from './controllers/otp.controller';
 import { AuthService } from './services/auth.service';
+import { PatientAccountService } from './services/patient-account.service';
 import { OtpService } from './services/otp.service';
 import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -33,9 +35,11 @@ import { AccountRolesModule } from '../account-roles/account-roles.module';
     AuthSharedController,
     AuthPatientAppController,
     AuthStaffController,
+ //   OtpController,
   ],
   providers: [
     AuthService,
+    PatientAccountService,
     OtpService,
     TokenService,
     JwtStrategy,
