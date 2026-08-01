@@ -220,24 +220,18 @@ export class PatientService {
         },
       });
 
-      for (const fv of formValues) {
-        await tx.patientFormFieldValue.upsert({
-          where: {
-            patientId_fieldDefinitionId: {
-              patientId,
-              fieldDefinitionId: fv.fieldDefinitionId,
-            },
-          },
-          create: {
+      await tx.patientFormFieldValue.deleteMany({
+        where: { patientId },
+      });
+
+      if (formValues.length > 0) {
+        await tx.patientFormFieldValue.createMany({
+          data: formValues.map((fv) => ({
             patientId,
             fieldDefinitionId: fv.fieldDefinitionId,
             value: fv.value,
             updatedByAccountId: context.authenticatedAccountId,
-          },
-          update: {
-            value: fv.value,
-            updatedByAccountId: context.authenticatedAccountId,
-          },
+          })),
         });
       }
 
