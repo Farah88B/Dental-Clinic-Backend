@@ -23,6 +23,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'جلسة الدخول غير صالحة أو منتهية',
     en: 'Your session is invalid or has expired',
   },
+  [ERROR_CODES.RATE_LIMIT_EXCEEDED]: {
+    ar: 'تم تجاوز الحد المسموح من الطلبات، حاول مرة أخرى لاحقًا',
+    en: 'Too many requests. Please try again later',
+  },
+  [AUTH_ERROR_CODES.INVALID_CREDENTIALS]: {
+    ar: 'رقم الهاتف أو كلمة المرور غير صحيحة',
+    en: 'Invalid phone number or password',
+  },
   [ERROR_CODES.NOT_AUTHENTICATED]: {
     ar: 'يجب تسجيل الدخول للوصول لهذه الخدمة',
     en: 'You must be logged in to access this resource',
@@ -87,6 +95,10 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'لا يمكنك تعطيل حسابك الخاص أثناء تسجيل دخولك',
     en: 'You cannot disable your own account while logged in',
   },
+  [AUTH_ERROR_CODES.NEW_PHONE_SAME_AS_CURRENT]: {
+    ar: 'رقم الهاتف الجديد مطابق للرقم الحالي',
+    en: 'The new phone number is the same as your current one',
+  },
   [AUTH_ERROR_CODES.INCORRECT_PASSWORD]: {
     ar: 'كلمة المرور الحالية غير صحيحة',
     en: 'The current password is incorrect',
@@ -134,6 +146,9 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.MEDIA_FILE_NOT_FOUND]: {
     ar: 'الملف غير موجود',
     en: 'Media file was not found',
+  [ERROR_CODES.INVALID_OPERATION]: {
+    ar: 'لا يمكن تنفيذ هذا الإجراء',
+    en: 'This operation cannot be performed',
   },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
