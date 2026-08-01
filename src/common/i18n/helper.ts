@@ -146,6 +146,7 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.MEDIA_FILE_NOT_FOUND]: {
     ar: 'الملف غير موجود',
     en: 'Media file was not found',
+  },
   [ERROR_CODES.INVALID_OPERATION]: {
     ar: 'لا يمكن تنفيذ هذا الإجراء',
     en: 'This operation cannot be performed',
@@ -162,6 +163,7 @@ const DEFAULT_LANGUAGE: Language = 'ar';
 export function isKnownErrorCode(code: string): boolean {
   return code in MESSAGES;
 }
+
 export function translate(code: string, lang: Language = DEFAULT_LANGUAGE): string {
   return (
   MESSAGES[code]?.[lang] ??
