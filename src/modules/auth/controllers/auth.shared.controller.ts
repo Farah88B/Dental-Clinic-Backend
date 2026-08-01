@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/common/decorators/public.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -12,6 +12,7 @@ import { TokenPairDto } from '../dto/token-pair.dto';
 import { ActivationRequiredDto } from '../dto/activation-required.dto';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiBaseUnionResponse } from 'src/common/decorators/api-base-union-response.decorator';
+import { AuthMeDto } from '../dto/auth-me.dto';
 
 @ApiTags('Auth - Shared')
 @Controller('auth')
@@ -40,6 +41,15 @@ export class AuthSharedController {
   @ApiOperation({ summary: 'Logout (stateless — client discards tokens) — مشترك' })
   logout() {
     return this.authService.logout();
+  }
+
+  @ApiBearerAuth('JWT')
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Get the current authenticated account profile — مشترك' })
+  @ApiBaseResponse(AuthMeDto)
+  me(@ReqUser('id') accountId: number) {
+    return this.authService.me(accountId);
   }
 
   @ApiBearerAuth('JWT')

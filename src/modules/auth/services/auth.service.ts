@@ -23,6 +23,7 @@ import { CompleteActivationDto } from '../dto/complete-activation.dto';
 import { ActivationRequiredDto } from '../dto/activation-required.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { SetLanguageDto } from '../dto/update-preferences.dto';
+import { AuthMeDto } from '../dto/auth-me.dto';
 const PATIENT_ROLE_CODE = 'PATIENT';
 
 @Injectable()
@@ -159,6 +160,40 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
     const account = await this.prisma.account.findUniqueOrThrow({ where: { id: accountId }, select: { preferredLanguage: true } });
     const tokenPair = this.tokenService.issueTokenPair({ id: accountId, phone, preferredLanguage: account.preferredLanguage.toLowerCase() as 'ar' | 'en', roles }, status);
     return new TokenPairDto({ ...tokenPair, accountStatus: status });
+  }
+
+  async me(accountId: number): Promise<AuthMeDto> {
+    const account = await this.prisma.account.findUniqueOrThrow({
+      where: { id: accountId },
+      select: {
+        id: true,
+        phone: true,
+        status: true,
+        biometricEnabled: true,
+        preferredLanguage: true,
+        createdAt: true,
+        updatedAt: true,
+        roles: {
+          select: {
+            role: {
+              select: { code: true },
+            },
+          },
+        },
+      },
+    });
+
+    return new AuthMeDto({
+      id: account.id,
+      phone: account.phone,
+      accountStatus: account.status,
+      activationRequired: false,
+      roles: account.roles.map((accountRole) => accountRole.role.code),
+      preferredLanguage: account.preferredLanguage.toLowerCase() as 'ar' | 'en',
+      biometricEnabled: account.biometricEnabled,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    });
   }
 
   // Exchange a valid refresh token for a new authenticated response.
