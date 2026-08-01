@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Adapter } from 'src/common/adapter/interfaces/adapter.interface';
+import { buildPublicMediaUrl } from 'src/common/media/helpers/media-path.helper';
 import { PatientResponseDto } from '../dto/patient-response.dto';
 import { PatientMyResponseDto } from '../dto/patient-my-response.dto';
 import { PatientDetailResponseDto } from '../dto/patient-detail-response.dto';
@@ -45,7 +46,10 @@ export class PatientAdapter implements Adapter<PatientResponseDto, RawPatient> {
       gender: raw.gender,
       status: raw.status,
       profileImage: raw.profileImage
-        ? { id: raw.profileImage.id, url: raw.profileImage.path }
+        ? {
+            id: raw.profileImage.id,
+            url: buildPublicMediaUrl(raw.profileImage.path),
+          }
         : null,
     });
   }
@@ -68,7 +72,10 @@ export class PatientAdapter implements Adapter<PatientResponseDto, RawPatient> {
       status: raw.status,
       lastVisitAt: raw.lastVisitAt,
       profileImage: raw.profileImage
-        ? { id: raw.profileImage.id, url: raw.profileImage.path }
+        ? {
+            id: raw.profileImage.id,
+            url: buildPublicMediaUrl(raw.profileImage.path),
+          }
         : null,
       account:
         includeAccount && raw.account
@@ -103,7 +110,10 @@ export class PatientAdapter implements Adapter<PatientResponseDto, RawPatient> {
       status: raw.status,
       lastVisitAt: raw.lastVisitAt,
       profileImage: raw.profileImage
-        ? { id: raw.profileImage.id, url: raw.profileImage.path }
+        ? {
+            id: raw.profileImage.id,
+            url: buildPublicMediaUrl(raw.profileImage.path),
+          }
         : null,
       accountId: raw.accountId,
     });

@@ -7,6 +7,7 @@ import { envValidationSchema }from './config/env.validation';
 import configuration from './config/configuration';
 import { AppLoggerModule } from './common/logger/logger.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { MediaModule } from './common/media/media.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
@@ -45,6 +46,7 @@ import { PatientModule } from './modules/patient/patient.module';
     ]),
    AppLoggerModule,
     PrismaModule,
+    MediaModule,
     TerminusModule,
    HealthModule,
    

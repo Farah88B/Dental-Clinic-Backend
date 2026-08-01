@@ -22,6 +22,11 @@ export default () => ({
     staticOtpCode: process.env.SMS_STATIC_OTP_CODE ?? '123456',
   },
 
+  media: {
+    uploadRoot: process.env.MEDIA_UPLOAD_ROOT ?? 'uploads',
+    publicPath: process.env.MEDIA_PUBLIC_PATH ?? '/uploads',
+  },
+
 });
 
 
