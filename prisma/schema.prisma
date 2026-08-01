@@ -286,28 +286,37 @@ model PatientFormFieldValue {
   @@index([fieldDefinitionId])
 
 }
-model MediaFile {
+enum MediaFileCategory {
+  PROFILE_IMAGE
+  XRAY
+  REPORT
+  PRESCRIPTION
+  CONTENT_IMAGE
+  OTHER
+}
 
+model MediaFile {
   id Int @id @default(autoincrement())
 
   originalName String
-  path String  @unique
-  mimeType String
-  size Int
+  storedName   String @unique
+  path         String @unique
+  mimeType     String
+  size         Int
+  category     MediaFileCategory
 
   uploadedByAccountId Int?
-  uploadedByAccount Account?  @relation(fields: [uploadedByAccountId], references: [id])
+  uploadedByAccount   Account? @relation(fields: [uploadedByAccountId], references: [id])
 
-  patientProfile Patient[]  
+  patientProfile Patient[]
 
- // medicalAttachments MedicalAttachment[]
-
- // contentMedia ContentMediaFile[]
+  // medicalAttachments MedicalAttachment[]
+  // contentMedia ContentMediaFile[]
 
   createdAt DateTime @default(now())
 
   @@index([uploadedByAccountId])
   @@index([mimeType])
+  @@index([category])
   @@index([createdAt])
-
 }

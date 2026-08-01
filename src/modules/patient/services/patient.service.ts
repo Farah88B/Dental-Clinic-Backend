@@ -4,8 +4,9 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Patient, Prisma } from '@prisma/client';
+import { Patient, Prisma, MediaFileCategory } from '@prisma/client';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
+import { MediaService } from 'src/common/media/services/media.service';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { AdminListDto } from 'src/common/admin/admin-list.dto';
 import { PatientAdapter } from '../adapter/patient.adapter';
@@ -52,6 +53,7 @@ export class PatientService {
     private readonly patientFormSchemaAdapter: PatientFormSchemaAdapter,
     private readonly patientFormValidationService: PatientFormValidationService,
     private readonly medicalRecordNumberService: MedicalRecordNumberService,
+    private readonly mediaService: MediaService,
   ) {}
 
   async getFormSchema(
@@ -242,6 +244,66 @@ export class PatientService {
     });
 
     return this.patientAdapter.adapt(updated);
+  }
+
+  async updateProfileImage(
+    patientId: number,
+    file: Express.Multer.File,
+    context: UpdatePatientContext,
+    language: Language = 'ar',
+  ): Promise<PatientDetailResponseDto> {
+    const patient = await this.prisma.patient.findUniqueOrThrow({
+      where: { id: patientId },
+      select: {
+        id: true,
+        status: true,
+        accountId: true,
+        profileImageId: true,
+      },
+    });
+
+    if (patient.status === 'ARCHIVED') {
+      throw new BadRequestException(ERROR_CODES.PATIENT_ARCHIVED_CANNOT_UPDATE);
+    }
+
+    if (
+      context.source === 'APP' &&
+      patient.accountId !== context.authenticatedAccountId
+    ) {
+      throw new ForbiddenException();
+    }
+
+    const previousImageId = patient.profileImageId;
+    const media = await this.mediaService.save(
+      file,
+      MediaFileCategory.PROFILE_IMAGE,
+      context.authenticatedAccountId,
+    );
+
+    try {
+      await this.prisma.patient.update({
+        where: { id: patientId },
+        data: { profileImageId: media.id },
+      });
+    } catch (error) {
+      await this.mediaService.delete(media.id);
+      throw error;
+    }
+
+    if (previousImageId != null) {
+      await this.mediaService.delete(previousImageId);
+    }
+
+    const updated = await this.prisma.patient.findUniqueOrThrow({
+      where: { id: patientId },
+      select: patientDetailSelect(),
+    });
+
+    return this.patientAdapter.adaptDetail(
+      updated,
+      language,
+      context.source === 'DASHBOARD',
+    );
   }
 
   async updateStatus(

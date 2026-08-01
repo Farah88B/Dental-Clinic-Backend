@@ -5,6 +5,7 @@ import { MedicalRecordNumberService } from './medical-record-number.service';
 import { PatientFormValidationService } from './patient-form-validation.service';
 import { PatientService } from './patient.service';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
+import { MediaService } from 'src/common/media/services/media.service';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 
 describe('PatientService', () => {
@@ -50,6 +51,12 @@ describe('PatientService', () => {
   const medicalRecordNumberService = {
     generate: jest.fn(),
   };
+  const mediaService = {
+    save: jest.fn(),
+    delete: jest.fn(),
+    findById: jest.fn(),
+    getPublicUrl: jest.fn(),
+  };
   const appContext = {
     source: 'APP' as const,
     accountId: 5,
@@ -70,6 +77,10 @@ describe('PatientService', () => {
         {
           provide: MedicalRecordNumberService,
           useValue: medicalRecordNumberService,
+        },
+        {
+          provide: MediaService,
+          useValue: mediaService,
         },
       ],
     }).compile();

@@ -6,15 +6,21 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { MediaFileCategory } from '@prisma/client';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiPaginatedResponse } from 'src/common/decorators/api-paginated-response.decorator';
 import { AuditAction } from 'src/common/decorators/audit-user-action.decorator';
@@ -27,6 +33,7 @@ import {
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import type { AuthenticatedAccount } from 'src/common/interfaces/authenticated-account.interface';
+import { createMediaMulterOptions } from 'src/common/media/config/media-multer.config';
 import { CreateDashboardPatientDto } from '../dto/create-dashboard-patient.dto';
 import { PatientResponseDto } from '../dto/patient-response.dto';
 import { PatientListResponseDto } from '../dto/patient-list-response.dto';
@@ -138,6 +145,47 @@ export class PatientDashboardController {
       source: 'DASHBOARD',
       authenticatedAccountId: accountId,
     });
+  }
+
+  @Patch(':id/profile-image')
+  @RequirePermission('update_patient')
+  @AuditAction('UPDATE_PATIENT_PROFILE_IMAGE')
+  @ApiOperation({
+    summary:
+      'Upload or replace patient profile image - Used by: Staff Dashboard',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiBaseResponse(PatientDetailResponseDto)
+  @ApiParam({ name: 'id', type: Number })
+  @UseInterceptors(
+    FileInterceptor(
+      'file',
+      createMediaMulterOptions(MediaFileCategory.PROFILE_IMAGE),
+    ),
+  )
+  updateProfileImage(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+    @ReqUser() user: AuthenticatedAccount,
+  ) {
+    return this.patientService.updateProfileImage(
+      id,
+      file,
+      {
+        source: 'DASHBOARD',
+        authenticatedAccountId: user.id,
+      },
+      user.preferredLanguage,
+    );
   }
 
   @Patch(':id/status')

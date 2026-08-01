@@ -123,6 +123,18 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'لا يمكن تعديل ملف مريض مؤرشف',
     en: 'Cannot update an archived patient record',
   },
+  [ERROR_CODES.MEDIA_FILE_REQUIRED]: {
+    ar: 'الملف مطلوب',
+    en: 'A file is required',
+  },
+  [ERROR_CODES.MEDIA_INVALID_FILE_TYPE]: {
+    ar: 'نوع الملف غير مسموح',
+    en: 'This file type is not allowed',
+  },
+  [ERROR_CODES.MEDIA_FILE_NOT_FOUND]: {
+    ar: 'الملف غير موجود',
+    en: 'Media file was not found',
+  },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
     en: 'Passwords do not match',
