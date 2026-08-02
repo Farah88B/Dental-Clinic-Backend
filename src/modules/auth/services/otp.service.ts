@@ -17,16 +17,78 @@ export class OtpService {
     @Inject(OTP_CODE_GENERATOR) private readonly otpCodeGenerator: OtpCodeGenerator,
   ) {}
 
-  // Create and send a fresh OTP for a given account and OTP type.
-  async send(accountId: number, phone: string, type: OtpType): Promise<void> {
+  private async assertResendPolicy(accountId: number, type: OtpType): Promise<void> {
+    const latestOtp = await this.prisma.otpVerification.findFirst({
+      where: { accountId, type },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (latestOtp) {
+      const cooldownEndsAt = new Date(
+        latestOtp.createdAt.getTime() + OTP.RESEND_COOLDOWN_SECONDS * 1000,
+      );
+
+      if (cooldownEndsAt > new Date()) {
+        throw new BadRequestException(OTP_ERROR_CODES.OTP_RESEND_TOO_SOON);
+      }
+    }
+
+    const resendCount = await this.prisma.otpVerification.count({
+      where: {
+        accountId,
+        type,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60_000),
+        },
+      },
+    });
+
+    if (resendCount >= OTP.MAX_RESEND_PER_HOUR) {
+      throw new BadRequestException(OTP_ERROR_CODES.OTP_RESEND_LIMIT_EXCEEDED);
+    }
+  }
+
+  private async invalidatePreviousOtps(accountId: number, type: OtpType): Promise<void> {
+    await this.prisma.otpVerification.updateMany({
+      where: {
+        accountId,
+        type,
+        isUsed: false,
+      },
+      data: {
+        isUsed: true,
+      },
+    });
+  }
+
+  private async createOtp(
+    accountId: number,
+    phone: string,
+    type: OtpType,
+    metadata?: Prisma.InputJsonValue,
+  ): Promise<void> {
+    await this.assertResendPolicy(accountId, type);
+    await this.invalidatePreviousOtps(accountId, type);
+
     const code = this.otpCodeGenerator.generate();
     const expiresAt = new Date(Date.now() + OTP.EXPIRY_MINUTES * 60_000);
 
     await this.prisma.otpVerification.create({
-      data: { accountId, code, type, expiresAt },
+      data: {
+        accountId,
+        code,
+        type,
+        expiresAt,
+        ...(metadata ? { metadata } : {}),
+      },
     });
 
     await this.smsGateway.send(phone, `رمز التحقق الخاص بك: ${code}`);
+  }
+
+  // Create and send a fresh OTP for a given account and OTP type.
+  async send(accountId: number, phone: string, type: OtpType): Promise<void> {
+    await this.createOtp(accountId, phone, type);
   }
 
   // Validate the latest OTP for the account/type and mark it used on success.
@@ -64,14 +126,7 @@ export class OtpService {
     type: OtpType,
     metadata: Prisma.InputJsonValue,
   ): Promise<void> {
-    const code = this.otpCodeGenerator.generate();
-    const expiresAt = new Date(Date.now() + OTP.EXPIRY_MINUTES * 60_000);
-
-    await this.prisma.otpVerification.create({
-      data: { accountId, code, type, expiresAt, metadata },
-    });
-
-    await this.smsGateway.send(phone, `رمز التحقق الخاص بك: ${code}`);
+    await this.createOtp(accountId, phone, type, metadata);
   }
 
   // Validate the OTP and return the stored row, including metadata.

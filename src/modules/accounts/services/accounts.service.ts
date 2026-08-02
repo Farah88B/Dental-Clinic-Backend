@@ -11,6 +11,7 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AccountAdapter } from '../adapter/account.adapter';
 import { AccountRolesService } from 'src/modules/account-roles/services/account-roles.service';
 import { accountSelect } from '../selectors/account.selector';
+import { AccountStatus } from '@prisma/client';
 // Role codes are business invariants, not request-scoped values.
 // DOCTOR is the admin-equivalent role in this system, so the code is kept static here.
 const DOCTOR_ROLE_CODE = 'DOCTOR';
@@ -54,7 +55,7 @@ export class AccountsService {
 
     const account = await this.prisma.$transaction(async (tx) => {
       const created = await tx.account.create({
-        data: { phone: dto.phone, status: 'INVITED', createdById },
+        data: { phone: dto.phone, status: AccountStatus.INVITED, createdById },
       });
 
       await tx.accountRole.create({
@@ -86,7 +87,7 @@ export class AccountsService {
       throw new ForbiddenException(AUTH_ERROR_CODES.CANNOT_DISABLE_SELF);
     }
 
-    if (dto.status === 'DISABLED') {
+    if (dto.status === AccountStatus.DISABLED) {
       const holdsDoctorRole = await this.prisma.accountRole.findFirst({
         where: { accountId: id, role: { code: DOCTOR_ROLE_CODE } },
       });

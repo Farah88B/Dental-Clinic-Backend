@@ -10,6 +10,7 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import { SetLanguageDto } from '../dto/update-preferences.dto';
 import { TokenPairDto } from '../dto/token-pair.dto';
 import { ActivationRequiredDto } from '../dto/activation-required.dto';
+import { OtpRequiredDto } from '../dto/otp-required.dto';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiBaseUnionResponse } from 'src/common/decorators/api-base-union-response.decorator';
 import { AuthMeDto } from '../dto/auth-me.dto';
@@ -21,8 +22,8 @@ export class AuthSharedController {
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login — يُستخدم من: تطبيق المريض + لوحة تحكم الطاقم. Returns tokens if ACTIVE, or {activationRequired, temporaryToken} if INVITED' })
-  @ApiBaseUnionResponse(TokenPairDto, ActivationRequiredDto)
+  @ApiOperation({ summary: 'Login — يُستخدم من: تطبيق المريض + لوحة تحكم الطاقم. Returns tokens if ACTIVE, {activationRequired, temporaryToken} if INVITED, or {otpRequired, temporaryToken} if PENDING_ACTIVATION' })
+  @ApiBaseUnionResponse(TokenPairDto, ActivationRequiredDto, OtpRequiredDto)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }

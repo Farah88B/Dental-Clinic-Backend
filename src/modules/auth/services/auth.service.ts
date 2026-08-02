@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AccountStatus, OtpType } from '@prisma/client';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { hashPassword, comparePassword } from 'src/common/utils/hash.utils';
@@ -21,6 +21,7 @@ import { TokenPairDto } from '../dto/token-pair.dto';
 import { ActivateInvitationDto } from '../dto/activate-invitation.dto';
 import { CompleteActivationDto } from '../dto/complete-activation.dto';
 import { ActivationRequiredDto } from '../dto/activation-required.dto';
+import { OtpRequiredDto } from '../dto/otp-required.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { SetLanguageDto } from '../dto/update-preferences.dto';
 import { AuthMeDto } from '../dto/auth-me.dto';
@@ -40,16 +41,34 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
   const existing = await this.prisma.account.findUnique({ where: { phone: dto.phone } });
 
   if (existing) {
-    const password = await hashPassword(dto.password); // allow changing password on retry
-    await this.prisma.account.update({
-      where: { id: existing.id },
-      data: {
-        password,
-        preferredLanguage: (dto.language ?? 'ar').toUpperCase() as 'AR' | 'EN',
-      },
-    });
-    await this.otpService.send(existing.id, dto.phone, OtpType.REGISTER);
-    return { accountId: existing.id };
+      switch (existing.status) {
+        case AccountStatus.PENDING_ACTIVATION: {
+          const password = await hashPassword(dto.password);
+
+          await this.prisma.account.update({
+            where: { id: existing.id },
+            data: {
+              password,
+              preferredLanguage: (dto.language ?? 'ar').toUpperCase() as 'AR' | 'EN',
+            },
+          });
+
+          await this.otpService.send(existing.id, dto.phone, OtpType.REGISTER);
+          return { accountId: existing.id };
+        }
+
+        case AccountStatus.ACTIVE:
+          throw new ConflictException(AUTH_ERROR_CODES.ACCOUNT_ALREADY_EXISTS);
+
+        case AccountStatus.INVITED:
+          throw new ConflictException(AUTH_ERROR_CODES.ACCOUNT_ALREADY_INVITED);
+
+        case AccountStatus.DISABLED:
+          throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_DISABLED);
+
+        default:
+          throw new ConflictException(AUTH_ERROR_CODES.ACCOUNT_ALREADY_EXISTS);
+      }
   }
 
   const password = await hashPassword(dto.password);
@@ -57,7 +76,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
     data: {
       phone: dto.phone,
       password,
-      status: 'PENDING_ACTIVATION',
+      status: AccountStatus.PENDING_ACTIVATION,
       preferredLanguage: (dto.language ?? 'ar').toUpperCase() as 'AR' | 'EN',
     },
   });
@@ -72,7 +91,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
       where: { phone: dto.phone },
     });
 
-    if (account.status === 'ACTIVE') {
+    if (account.status === AccountStatus.ACTIVE) {
       return this.buildAuthenticatedResponse(account.id, account.phone, AccountStatus.ACTIVE);
     }
 
@@ -85,7 +104,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
     await this.prisma.$transaction([
       this.prisma.account.update({
         where: { id: account.id },
-        data: { status: 'ACTIVE', phoneVerifiedAt: new Date() },
+        data: { status: AccountStatus.ACTIVE, phoneVerifiedAt: new Date() },
       }),
       this.prisma.accountRole.create({
         data: { accountId: account.id, roleId: patientRole.id },
@@ -97,7 +116,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
 
 
   // Authenticate credentials and return either tokens or activation instructions.
-  async login(dto: LoginDto): Promise<TokenPairDto> {
+  async login(dto: LoginDto): Promise<TokenPairDto | ActivationRequiredDto | OtpRequiredDto> {
     const account = await this.prisma.account.findUnique({ where: { phone: dto.phone } });
 
     if (!account || !account.password) {
@@ -111,10 +130,16 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
 
     if (account.status === 'INVITED') {
       const temporaryToken = this.tokenService.issueActivationToken(account.id);
-        return new TokenPairDto({
-        activationRequired: true,
-        temporaryToken,
-      });
+      return new ActivationRequiredDto(temporaryToken);
+    }
+
+    if (account.status === AccountStatus.PENDING_ACTIVATION) {
+      const temporaryToken = this.tokenService.issueActivationToken(account.id);
+      return new OtpRequiredDto(temporaryToken);
+    }
+
+    if (account.status === 'DISABLED') {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_DISABLED);
     }
 
     if (account.status !== 'ACTIVE') {
@@ -136,18 +161,18 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
 
     const account = await this.prisma.account.findUniqueOrThrow({ where: { id: accountId } });
 
-    if (account.status === 'ACTIVE') {
+    if (account.status === AccountStatus.ACTIVE) {
       return this.buildAuthenticatedResponse(account.id, account.phone, AccountStatus.ACTIVE);
     }
 
-    if (account.status !== 'INVITED') {
+    if (account.status !== AccountStatus.INVITED) {
       throw new UnauthorizedException(AUTH_ERROR_CODES.INVALID_TOKEN);
     }
 
     const password = await hashPassword(dto.newPassword);
     const updated = await this.prisma.account.update({
       where: { id: accountId },
-      data: { password, status: 'ACTIVE' },
+      data: { password, status: AccountStatus.ACTIVE },
     });
 
     return this.buildAuthenticatedResponse(updated.id, updated.phone, updated.status);
@@ -182,7 +207,21 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
         },
       },
     });
+    if (account.status === AccountStatus.DISABLED) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_DISABLED);
+    }
 
+    if (account.status === AccountStatus.INVITED) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_NOT_ACTIVATED);
+    }
+
+    if (account.status === AccountStatus.PENDING_ACTIVATION) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_PENDING_ACTIVATION);
+    }
+
+    if (account.status !== AccountStatus.ACTIVE) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.INVALID_TOKEN);
+    }
     return new AuthMeDto({
       id: account.id,
       phone: account.phone,
@@ -206,7 +245,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
     }
 
     const account = await this.prisma.account.findUnique({ where: { id: payload.sub } });
-    if (!account || account.status !== 'ACTIVE') {
+    if (!account || account.status !== AccountStatus.ACTIVE) {
       throw new UnauthorizedException(AUTH_ERROR_CODES.INVALID_TOKEN);
     }
 
@@ -290,8 +329,8 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
   // Start activation for an invited staff account by sending an OTP.
   async startInvitationActivation(phone: string): Promise<void> {
     const account = await this.prisma.account.findUniqueOrThrow({ where: { phone } });
-    if (account.status !== 'INVITED') {
-      throw new BadRequestException('ACCOUNT_NOT_INVITED');
+    if (account.status !== AccountStatus.INVITED) {
+      throw new BadRequestException(AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED);
     }
     await this.otpService.send(account.id, phone, OtpType.ACCOUNT_ACTIVATION);
   }
@@ -299,8 +338,8 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
   // Complete activation for staff only
   async activateInvitation(dto: ActivateInvitationDto) {
       const account = await this.prisma.account.findUniqueOrThrow({ where: { phone: dto.phone } });
-      if (account.status !== 'INVITED') {
-        throw new BadRequestException('ACCOUNT_NOT_INVITED');
+      if (account.status !== AccountStatus.INVITED) {
+        throw new BadRequestException(AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED);
       }
 
       await this.otpService.verify(account.id, OtpType.ACCOUNT_ACTIVATION, dto.code);
@@ -308,7 +347,7 @@ async registerStart(dto: RegisterDto): Promise<{ accountId: number }> {
       const password = await hashPassword(dto.password);
       await this.prisma.account.update({
         where: { id: account.id },
-        data: { password, status: 'ACTIVE', phoneVerifiedAt: new Date() },
+        data: { password, status: AccountStatus.ACTIVE, phoneVerifiedAt: new Date() },
       });
 
         return this.buildAuthenticatedResponse(account.id, account.phone, AccountStatus.ACTIVE);
