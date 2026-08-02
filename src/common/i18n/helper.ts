@@ -107,6 +107,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'الحساب غير نشط',
     en: 'The account is not active',
   },
+  [AUTH_ERROR_CODES.ACCOUNT_NOT_ACTIVATED]: {
+    ar: 'الحساب غير مفعل، يرجى إكمال عملية التفعيل',
+    en: 'The account is not activated, please complete activation',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_PENDING_ACTIVATION]: {
+    ar: 'الحساب غير مفعل، يرجى إكمال عملية التحقق',
+    en: 'The account is pending activation, please complete verification',
+  },
     [OTP_ERROR_CODES.OTP_EXPIRED]: {
     ar: 'انتهت صلاحية رمز التحقق',
     en: 'Verification code has expired',
@@ -123,6 +131,15 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'رمز التحقق مستخدم مسبقًا',
     en: 'Verification code has already been used',
   },
+  [OTP_ERROR_CODES.OTP_RESEND_TOO_SOON]: {
+  ar: 'يرجى الانتظار قبل طلب رمز تحقق جديد',
+  en: 'Please wait before requesting a new verification code',
+},
+
+[OTP_ERROR_CODES.OTP_RESEND_LIMIT_EXCEEDED]: {
+  ar: 'تم تجاوز الحد المسموح لإرسال رموز التحقق، يرجى المحاولة لاحقًا',
+  en: 'The maximum verification code resend limit has been exceeded, please try again later',
+},
   [AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED]: {
     ar: 'هذا الحساب ليس بحالة دعوة',
     en: 'This account is not in invited status',
@@ -154,6 +171,18 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
     en: 'Passwords do not match',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_DISABLED]: {
+    ar: 'الحساب معطل، يرجى التواصل مع إدارة العيادة',
+    en: 'The account is disabled, please contact the clinic administration',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_ALREADY_EXISTS]: {
+    ar: 'الحساب موجود مسبقاً، يرجى تسجيل الدخول',
+    en: 'The account already exists, please sign in',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_ALREADY_INVITED]: {
+    ar: 'هذا الحساب مدعو مسبقاً، يرجى إكمال عملية التفعيل',
+    en: 'This account is already invited, please complete activation',
   },
 };
 

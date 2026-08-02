@@ -4,6 +4,7 @@ import { hashPassword } from 'src/common/utils/hash.utils';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { CreatePatientAccountDto } from '../dto/create-patient-account.dto';
 import { RegeneratePatientPasswordResponseDto } from '../dto/regenerate-patient-password-response.dto';
+import { AccountStatus } from '@prisma/client';
 
 const PATIENT_ROLE_CODE = 'PATIENT';
 
@@ -22,7 +23,7 @@ export class PatientAccountService {
         data: {
           phone: dto.phone,
           password,
-          status: 'INVITED',
+          status: AccountStatus.INVITED,
           phoneVerifiedAt: new Date(),
         },
       });
@@ -60,7 +61,7 @@ export class PatientAccountService {
       throw new ConflictException(ERROR_CODES.NOT_FOUND);
     }
 
-    if (patient.account.status !== 'INVITED') {
+    if (patient.account.status !== AccountStatus.INVITED) {
       throw new ConflictException(ERROR_CODES.INVALID_OPERATION);
     }
 
