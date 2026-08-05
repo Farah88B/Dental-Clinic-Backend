@@ -293,7 +293,7 @@ export async function upsertDemoPatientJourney(prisma: PrismaService) {
     doctor?.id ?? null,
   );
 
-  await ensureCompletedPlanEncounters(
+  await ensureCompletedPlanEncountersAndMedia(
     prisma,
     planC.sessions,
     doctor?.id ?? null,
@@ -938,10 +938,10 @@ async function ensurePlanCAppointments(
   );
 }
 
-async function ensureCompletedPlanEncounters(
+async function ensureCompletedPlanEncountersAndMedia(
   prisma: PrismaService,
   sessions: { id: number; sessionOrder: number; status: TreatmentSessionStatus }[],
-  _doctorId: number | null,
+  doctorId: number | null,
   diagnosisByOrder: Record<number, string>,
 ) {
   const emptyTeeth = Array.from({ length: TREATMENT_CONSTANTS.TEETH_COUNT }, (_, i) => ({
@@ -949,23 +949,92 @@ async function ensureCompletedPlanEncounters(
     value: null,
   }));
 
+  const mediaByOrder: Record<
+    number,
+    Array<{
+      key: keyof typeof SEED_MEDIA;
+      type: MedicalAttachmentType;
+      title: string;
+    }>
+  > = {
+    1: [
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير تقييم اللون — قبل التبييض',
+      },
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة أساسية قبل التبييض',
+      },
+    ],
+    2: [
+      {
+        key: 'xray',
+        type: MedicalAttachmentType.XRAY,
+        title: 'أشعة قبل جلسة التبييض الأولى',
+      },
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير جلسة التبييض الأولى',
+      },
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — جلسة 1',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — جلسة 1',
+      },
+    ],
+    3: [
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير ختامي — انتهاء التبييض',
+      },
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — جلسة 2',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — جلسة 2',
+      },
+    ],
+  };
+
   for (const session of sessions.filter(
     (s) => s.status === TreatmentSessionStatus.COMPLETED,
   )) {
-    const existing = await prisma.encounter.findUnique({
+    let encounter = await prisma.encounter.findUnique({
       where: { treatmentSessionId: session.id },
     });
-    if (existing) continue;
 
-    await prisma.encounter.create({
-      data: {
-        treatmentSessionId: session.id,
-        status: EncounterStatus.COMPLETED,
-        diagnosis: diagnosisByOrder[session.sessionOrder] ?? 'خطة مكتملة',
-        clinicalNotes: 'ملاحظات سريرية — خطة مكتملة (Plan C)',
-        teeth: emptyTeeth,
-      },
-    });
+    if (!encounter) {
+      encounter = await prisma.encounter.create({
+        data: {
+          treatmentSessionId: session.id,
+          status: EncounterStatus.COMPLETED,
+          diagnosis: diagnosisByOrder[session.sessionOrder] ?? 'خطة مكتملة',
+          clinicalNotes: 'ملاحظات سريرية — خطة مكتملة (Plan C) مع مرفقات',
+          prescription:
+            session.sessionOrder === 3
+              ? 'معجون حساس الأسنان مرتين يومياً × أسبوعين'
+              : null,
+          teeth: emptyTeeth,
+        },
+      });
+    }
+
+    const specs = mediaByOrder[session.sessionOrder] ?? [];
+    await ensureEncounterMedia(prisma, encounter.id, doctorId, specs);
   }
 }
 
@@ -1107,18 +1176,25 @@ async function ensureSession2Media(
   encounterId: number | undefined,
   doctorId: number | null,
 ) {
-  if (!encounterId) return;
-
-  const specs: Array<{
-    key: keyof typeof SEED_MEDIA;
-    type: MedicalAttachmentType;
-    title: string;
-  }> = [
+  await ensureEncounterMedia(prisma, encounterId, doctorId, [
     { key: 'xray', type: MedicalAttachmentType.XRAY, title: 'أشعة قبل العلاج' },
     { key: 'report', type: MedicalAttachmentType.REPORT, title: 'تقرير طبي' },
     { key: 'photoBefore', type: MedicalAttachmentType.PHOTO, title: 'صورة قبل' },
     { key: 'photoAfter', type: MedicalAttachmentType.PHOTO, title: 'صورة بعد' },
-  ];
+  ]);
+}
+
+async function ensureEncounterMedia(
+  prisma: PrismaService,
+  encounterId: number | undefined,
+  doctorId: number | null,
+  specs: Array<{
+    key: keyof typeof SEED_MEDIA;
+    type: MedicalAttachmentType;
+    title: string;
+  }>,
+) {
+  if (!encounterId || specs.length === 0) return;
 
   for (const item of specs) {
     const media = await registerMediaIfPresent(prisma, SEED_MEDIA[item.key], doctorId);
