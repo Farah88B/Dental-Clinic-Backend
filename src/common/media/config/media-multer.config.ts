@@ -15,6 +15,7 @@ import { getCategoryDirectory } from '../helpers/media-path.helper';
 
 export function createMediaMulterOptions(
   category: MediaFileCategory,
+  options?: { maxFiles?: number },
 ): MulterOptions {
   const uploadRoot = resolve(
     process.cwd(),
@@ -37,7 +38,7 @@ export function createMediaMulterOptions(
     }),
     limits: {
       fileSize: maxSize,
-      files: 1,
+      files: options?.maxFiles ?? 1,
     },
     fileFilter: (_req, file, callback) => {
       if (!allowedMimeTypes.includes(file.mimetype)) {

@@ -1,0 +1,38 @@
+[
+  {
+    "type": "ARTICLE",
+    "status": "PUBLISHED",
+    "titleAr": "كيف تحافظ على صحة أسنانك",
+    "titleEn": "How to Keep Your Teeth Healthy",
+    "bodyAr": "نصائح يومية للعناية بالأسنان واللثة من عيادة الأسنان.",
+    "bodyEn": "Daily tips for teeth and gum care from our dental clinic.",
+    "imageCount": 0
+  },
+  {
+    "type": "NEWS",
+    "status": "PUBLISHED",
+    "titleAr": "افتتاح قسم تبييض جديد",
+    "titleEn": "New Whitening Department Opening",
+    "bodyAr": "يسرّنا الإعلان عن افتتاح قسم التبييض الحديث في العيادة.",
+    "bodyEn": "We are pleased to announce our new modern whitening department.",
+    "imageCount": 1
+  },
+  {
+    "type": "OFFER",
+    "status": "PUBLISHED",
+    "titleAr": "عرض تنظيف الأسنان",
+    "titleEn": "Teeth Cleaning Special Offer",
+    "bodyAr": "خصم خاص على جلسة التنظيف هذا الشهر.",
+    "bodyEn": "Special discount on cleaning sessions this month.",
+    "imageCount": 2
+  },
+  {
+    "type": "ARTICLE",
+    "status": "DRAFT",
+    "titleAr": "مقال مسودة غير منشور",
+    "titleEn": "Unpublished Draft Article",
+    "bodyAr": "هذا المحتوى يجب ألا يظهر للمريض.",
+    "bodyEn": "This content must not appear to patients.",
+    "imageCount": 0
+  }
+]

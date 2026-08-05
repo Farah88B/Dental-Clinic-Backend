@@ -136,56 +136,50 @@
     "order": 22
   },
 
-  {
-    "code": "manage_inventory",
-    "nameAr": "إدارة المخزون",
-    "nameEn": "Manage Inventory",
-    "order": 23
-  },
 
   {
     "code": "manage_content",
     "nameAr": "إدارة المحتوى",
     "nameEn": "Manage Content",
-    "order": 24
+    "order": 23
   },
 
   {
     "code": "view_statistics",
     "nameAr": "عرض الإحصائيات",
     "nameEn": "View Statistics",
-    "order": 25
+    "order": 24
   },
   {
     "code": "view_financial_reports",
     "nameAr": "عرض التقارير المالية",
     "nameEn": "View Financial Reports",
-    "order": 26
+    "order": 25
   },
   {
     "code": "export_reports",
     "nameAr": "تصدير التقارير",
     "nameEn": "Export Reports",
-    "order": 27
+    "order": 26
   },
 
   {
     "code": "view_notifications",
     "nameAr": "عرض الإشعارات",
     "nameEn": "View Notifications",
-    "order": 28
+    "order": 27
   },
 
   {
     "code": "manage_clinic_settings",
     "nameAr": "إدارة إعدادات العيادة",
     "nameEn": "Manage Clinic Settings",
-    "order": 29
+    "order": 28
   },
   {
     "code": "manage_patient_form_fields",
     "nameAr": "إدارة حقول نموذج المريض",
     "nameEn": "Manage Patient Form Fields",
-    "order": 30
+    "order": 29
   }
 ]

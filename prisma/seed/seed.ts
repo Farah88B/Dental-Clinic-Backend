@@ -16,6 +16,9 @@ import * as PermissionSeed from "./permissions/permission.seed";
 import { upsertClinicSettings } from "./clinic-settings/clinic-settings.seed";
 
 import { upsertDefaultPatientFormFields } from "./patient-form-fields/patient-form-field.seed";
+import { upsertDefaultTreatmentTemplates } from "./treatment-templates/treatment-templates.seed";
+import { upsertDemoPatientJourney } from "./demo-patient-journey/demo-patient.seed";
+import { upsertDemoContent } from "./content/content.seed";
 
 const prisma = new PrismaService();
 
@@ -33,6 +36,12 @@ async function main(){
  await upsertDefaultPatientFormFields(prisma); 
 
  await upsertClinicSettings(prisma);
+
+ await upsertDefaultTreatmentTemplates(prisma);
+
+ await upsertDemoPatientJourney(prisma);
+
+ await upsertDemoContent(prisma);
 
 }
 

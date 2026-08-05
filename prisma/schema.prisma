@@ -109,6 +109,18 @@ model Account {
 
   otpVerifications OtpVerification[]
 
+  createdTreatmentPlanTemplates TreatmentPlanTemplate[]
+
+  createdTreatmentPlans TreatmentPlan[]
+
+  createdContents Content[]
+
+  createdAppointments     Appointment[] @relation("AppointmentCreator")
+  confirmedAppointments   Appointment[] @relation("AppointmentConfirmer")
+  cancelledAppointments   Appointment[] @relation("AppointmentCanceller")
+  rescheduledAppointments Appointment[] @relation("AppointmentRescheduler")
+  checkedInAppointments   Appointment[] @relation("AppointmentChecker")
+
 }
 
 model AccountRole {
@@ -221,6 +233,9 @@ model Patient {
 
   formValues PatientFormFieldValue[]
 
+  treatmentPlans TreatmentPlan[]
+  appointments   Appointment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -310,8 +325,8 @@ model MediaFile {
 
   patientProfile Patient[]
 
-  // medicalAttachments MedicalAttachment[]
-  // contentMedia ContentMediaFile[]
+  medicalAttachments MedicalAttachment[]
+  contentMediaFiles  ContentMediaFile[]
 
   createdAt DateTime @default(now())
 
@@ -319,4 +334,329 @@ model MediaFile {
   @@index([mimeType])
   @@index([category])
   @@index([createdAt])
+}
+
+model TreatmentPlanTemplate {
+  id Int @id @default(autoincrement())
+
+  nameAr String
+  nameEn String
+
+  // Computed automatically as SUM(sessionTemplates.estimatedCost) — never set manually via API.
+  estimatedCost Decimal @default(0) @db.Decimal(10, 2)
+
+  createdByAccountId Int?
+  createdByAccount   Account? @relation(fields: [createdByAccountId], references: [id])
+
+  isActive Boolean @default(true)
+
+  sessionTemplates TreatmentSessionTemplate[]
+  treatmentPlans   TreatmentPlan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model TreatmentSessionTemplate {
+  id Int @id @default(autoincrement())
+
+  planTemplateId Int
+  planTemplate   TreatmentPlanTemplate @relation(fields: [planTemplateId], references: [id], onDelete: Cascade)
+
+  titleAr String
+  titleEn String
+
+  sessionOrder Int
+
+  durationMinutes      Int?
+  // Abstract day-count only in Epic A (no real date — template has no patient/real session).
+  // Epic B: availableForBookingAt = previous session completion date + this number.
+  minDaysBeforeBooking Int?
+
+  estimatedCost Decimal @default(0) @db.Decimal(10, 2)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planTemplateId])
+  @@index([isActive])
+  @@unique([planTemplateId, sessionOrder])
+}
+
+enum TreatmentPlanStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TreatmentSessionStatus {
+  PENDING
+  BOOKED
+  IN_TREATMENT
+  COMPLETED
+  CANCELLED
+}
+
+enum EncounterStatus {
+  IN_TREATMENT
+  COMPLETED
+}
+
+enum MedicalAttachmentType {
+  XRAY
+  REPORT
+  PHOTO
+}
+
+enum AppointmentStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  CHECKED_IN
+  IN_TREATMENT
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentType {
+  CONSULTATION
+  FOLLOW_UP
+}
+
+model TreatmentPlan {
+  id Int @id @default(autoincrement())
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  createdByAccountId Int?
+  createdByAccount   Account? @relation(fields: [createdByAccountId], references: [id])
+
+  templateId Int?
+  template   TreatmentPlanTemplate? @relation(fields: [templateId], references: [id])
+
+  nameAr String?
+  nameEn String?
+
+  status TreatmentPlanStatus @default(ACTIVE)
+
+  estimatedCost Decimal @default(0) @db.Decimal(10, 2)
+  actualCost    Decimal @default(0) @db.Decimal(10, 2)
+
+  isActive Boolean @default(true)
+
+  sessions TreatmentSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([isActive])
+}
+
+model TreatmentSession {
+  id Int @id @default(autoincrement())
+
+  treatmentPlanId Int
+  treatmentPlan   TreatmentPlan @relation(fields: [treatmentPlanId], references: [id], onDelete: Cascade)
+
+  titleAr String
+  titleEn String
+
+  sessionOrder Int
+
+  durationMinutes      Int?
+  minDaysBeforeBooking Int?
+
+  estimatedCost Decimal  @default(0) @db.Decimal(10, 2)
+  actualCost    Decimal? @db.Decimal(10, 2)
+
+  availableForBookingAt DateTime?
+
+  status TreatmentSessionStatus @default(PENDING)
+
+  completedAt DateTime?
+
+  rating  Int?
+  ratedAt DateTime?
+
+  encounter    Encounter?
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([treatmentPlanId])
+  @@index([status])
+  @@index([availableForBookingAt])
+  @@unique([treatmentPlanId, sessionOrder])
+}
+
+model Appointment {
+  id Int @id @default(autoincrement())
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  createdById Int?
+  createdBy   Account? @relation("AppointmentCreator", fields: [createdById], references: [id])
+
+  treatmentSessionId Int?
+  treatmentSession   TreatmentSession? @relation(fields: [treatmentSessionId], references: [id])
+
+  confirmedById Int?
+  confirmedBy   Account? @relation("AppointmentConfirmer", fields: [confirmedById], references: [id])
+
+  cancelledById Int?
+  cancelledBy   Account? @relation("AppointmentCanceller", fields: [cancelledById], references: [id])
+
+  rescheduledById Int?
+  rescheduledBy   Account? @relation("AppointmentRescheduler", fields: [rescheduledById], references: [id])
+
+  checkedInById Int?
+  checkedInBy   Account? @relation("AppointmentChecker", fields: [checkedInById], references: [id])
+
+  type AppointmentType
+
+  scheduledAt DateTime
+
+  /// Snapshot from ClinicSettings at booking time
+  durationMinutes Int
+
+  status AppointmentStatus @default(PENDING_CONFIRMATION)
+
+  isWaiting Boolean @default(false)
+
+  reasonForVisit String?
+  chatbotSummary String?
+  notes          String?
+
+  confirmedAt DateTime?
+
+  cancellationReason String?
+
+  checkedInAt DateTime?
+
+  rescheduledAt DateTime?
+
+  cancelledAt DateTime?
+
+  completedAt DateTime?
+
+  encounters Encounter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([type])
+  @@index([scheduledAt])
+  @@index([scheduledAt, status])
+  @@index([patientId, status])
+  @@index([treatmentSessionId])
+  @@index([createdById])
+  @@index([confirmedById])
+  @@index([cancelledById])
+  @@index([checkedInById])
+  @@index([rescheduledById])
+}
+
+model Encounter {
+  id Int @id @default(autoincrement())
+
+  treatmentSessionId Int              @unique
+  treatmentSession   TreatmentSession @relation(fields: [treatmentSessionId], references: [id], onDelete: Cascade)
+
+  appointmentId Int?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  status EncounterStatus @default(IN_TREATMENT)
+
+  diagnosis     String? @db.Text
+  clinicalNotes String? @db.Text
+  // Fixed-length array of 48 tooth entries (initialized on session start).
+  teeth         Json
+  prescription  String? @db.Text
+
+  attachments MedicalAttachment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([appointmentId])
+}
+
+model MedicalAttachment {
+  id Int @id @default(autoincrement())
+
+  encounterId Int
+  encounter   Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  mediaFileId Int
+  mediaFile   MediaFile @relation(fields: [mediaFileId], references: [id])
+
+  type  MedicalAttachmentType
+  title String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([encounterId])
+  @@index([mediaFileId])
+}
+
+enum ContentType {
+  ARTICLE
+  NEWS
+  OFFER
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Content {
+  id Int @id @default(autoincrement())
+
+  type   ContentType
+  status ContentStatus @default(DRAFT)
+
+  titleAr String
+  titleEn String
+  bodyAr  String? @db.Text
+  bodyEn  String? @db.Text
+
+  createdByAccountId Int?
+  createdByAccount   Account? @relation(fields: [createdByAccountId], references: [id])
+
+  mediaFiles ContentMediaFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+}
+
+model ContentMediaFile {
+  id Int @id @default(autoincrement())
+
+  contentId Int
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  mediaFileId Int
+  mediaFile   MediaFile @relation(fields: [mediaFileId], references: [id])
+
+  displayOrder Int @default(0)
+
+  @@unique([contentId, mediaFileId])
+  @@index([contentId, displayOrder])
 }
