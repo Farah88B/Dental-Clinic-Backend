@@ -27,6 +27,15 @@ export default () => ({
     publicPath: process.env.MEDIA_PUBLIC_PATH ?? '/uploads',
   },
 
+  clinic: {
+    timezone: process.env.CLINIC_TIMEZONE ?? 'Asia/Damascus',
+  },
+
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY ?? '',
+    model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+  },
+
 });
 
 

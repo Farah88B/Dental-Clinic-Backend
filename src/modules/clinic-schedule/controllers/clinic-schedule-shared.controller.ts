@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeController,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ReqUser } from 'src/common/decorators/req-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -8,6 +13,7 @@ import { CalendarQueryDto } from '../dto/calendar-query.dto';
 import { CalendarDayResponseDto } from '../dto/schedule-response.dto';
 import { ClinicScheduleService } from '../services/clinic-schedule.service';
 
+@ApiExcludeController()
 @ApiTags('Clinic Schedule — Shared')
 @ApiBearerAuth('JWT')
 @UseGuards(JwtAuthGuard)

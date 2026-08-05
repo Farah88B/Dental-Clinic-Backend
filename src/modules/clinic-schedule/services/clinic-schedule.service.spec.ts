@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { DayOfWeek } from '@prisma/client';
@@ -29,6 +29,9 @@ describe('ClinicScheduleService', () => {
     clinicSettings: {
       findFirstOrThrow: jest.fn(),
     },
+    appointment: {
+      findMany: jest.fn(),
+    },
     $transaction: jest.fn(),
   };
 
@@ -52,6 +55,8 @@ describe('ClinicScheduleService', () => {
     service = moduleRef.get(ClinicScheduleService);
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation(async (cb) => cb(prisma));
+    prisma.appointment.findMany.mockResolvedValue([]);
+    prisma.clinicScheduleException.findMany.mockResolvedValue([]);
   });
 
   it('parses human times to minutes', () => {
@@ -149,5 +154,85 @@ describe('ClinicScheduleService', () => {
         isBookable: expect.any(Boolean),
       }),
     );
+  });
+
+  it('BR-50: rejects closing a day that has future appointments unless confirmed', async () => {
+    // Pick a far-future Wednesday 09:00 Asia/Damascus ≈ 06:00Z
+    const scheduledAt = new Date('2030-08-21T06:00:00.000Z');
+    prisma.appointment.findMany.mockResolvedValue([
+      {
+        id: 11,
+        scheduledAt,
+        durationMinutes: 30,
+        patient: { fullName: 'Sara' },
+      },
+    ]);
+
+    await expect(
+      service.createException(
+        {
+          date: '2030-08-21',
+          isWorkingDay: false,
+        },
+        1,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    await expect(
+      service.createException(
+        {
+          date: '2030-08-21',
+          isWorkingDay: false,
+        },
+        1,
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        message: ERROR_CODES.SCHEDULE_CHANGE_HAS_CONFLICTS,
+        details: {
+          affectedAppointments: [
+            expect.objectContaining({
+              id: 11,
+              patientFullName: 'Sara',
+            }),
+          ],
+        },
+      },
+    });
+  });
+
+  it('BR-50: allows conflicting exception when confirmed=true', async () => {
+    const scheduledAt = new Date('2030-08-21T06:00:00.000Z');
+    prisma.appointment.findMany.mockResolvedValue([
+      {
+        id: 11,
+        scheduledAt,
+        durationMinutes: 30,
+        patient: { fullName: 'Sara' },
+      },
+    ]);
+    prisma.clinicScheduleException.create.mockResolvedValue({
+      id: 1,
+      date: new Date(Date.UTC(2030, 7, 21)),
+      isWorkingDay: false,
+      startMinute: null,
+      endMinute: null,
+      breaks: [],
+      reason: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.createException(
+      {
+        date: '2030-08-21',
+        isWorkingDay: false,
+        confirmed: true,
+      },
+      1,
+    );
+
+    expect(result.isWorkingDay).toBe(false);
+    expect(prisma.clinicScheduleException.create).toHaveBeenCalled();
   });
 });

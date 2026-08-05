@@ -50,7 +50,7 @@ export class CreateScheduleExceptionDto {
     required: false,
     default: false,
     description:
-      'Confirm despite appointment conflicts — TODO(Appointments): BR-50',
+      'Set true to apply the exception even when appointments that day conflict with the new window. Appointments are not cancelled.',
   })
   @IsOptional()
   @IsBoolean()

@@ -1,4 +1,6 @@
+import { APPOINTMENT_ERROR_CODES } from "../constants/appointment.constants";
 import { AUTH_ERROR_CODES } from "../constants/auth.constants";
+import { CHATBOT_ERROR_CODES } from "../constants/chatbot.constants";
 import { ERROR_CODES } from "../constants/error-codes.constants";
 import { OTP_ERROR_CODES } from "../constants/otp.constants";
 import { TREATMENT_ERROR_CODES } from "../constants/treatment.constants";
@@ -188,6 +190,66 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.INVALID_OPERATION]: {
     ar: 'لا يمكن تنفيذ هذا الإجراء',
     en: 'This operation cannot be performed',
+  },
+  [APPOINTMENT_ERROR_CODES.ONLINE_BOOKING_DISABLED]: {
+    ar: 'الحجز عبر التطبيق غير مفعّل حالياً',
+    en: 'Online booking is currently disabled',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_UNAVAILABLE]: {
+    ar: 'الفترة الزمنية المختارة غير متاحة',
+    en: 'The selected time slot is not available',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_SESSION_NOT_BOOKABLE]: {
+    ar: 'لا يمكن حجز هذه الجلسة العلاجية حالياً',
+    en: 'This treatment session cannot be booked right now',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_TYPE_SESSION_MISMATCH]: {
+    ar: 'نوع الموعد لا يتوافق مع ربط الجلسة العلاجية',
+    en: 'Appointment type does not match the treatment session link',
+  },
+  [APPOINTMENT_ERROR_CODES.ACTIVE_CONSULTATION_EXISTS]: {
+    ar: 'يوجد موعد استشارة سابق غير مكتمل لهذا المريض',
+    en: 'This patient already has an incomplete consultation appointment',
+  },
+  [APPOINTMENT_ERROR_CODES.PATIENT_ARCHIVED_CANNOT_BOOK]: {
+    ar: 'لا يمكن حجز موعد لمريض مؤرشف',
+    en: 'Cannot book an appointment for an archived patient',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_PAST_NOT_ALLOWED]: {
+    ar: 'لا يمكن حجز موعد في وقت ماضٍ',
+    en: 'Cannot book an appointment in the past',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_OUTSIDE_HORIZON]: {
+    ar: 'التاريخ خارج أفق الحجز المسموح',
+    en: 'The date is outside the allowed booking horizon',
+  },
+  [APPOINTMENT_ERROR_CODES.TREATMENT_SESSION_REQUIRED]: {
+    ar: 'يجب تحديد الجلسة العلاجية لموعد المتابعة',
+    en: 'A treatment session is required for a follow-up appointment',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_OUTSIDE_CANCEL_RESCHEDULE_WINDOW]: {
+    ar: 'تجاوزت المهلة المسموحة للتعديل أو الإلغاء من التطبيق. يرجى التواصل مع العيادة',
+    en: 'The allowed cancel/reschedule window has passed. Please contact the clinic',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_RESCHEDULABLE]: {
+    ar: 'لا يمكن إعادة جدولة هذا الموعد في حالته الحالية',
+    en: 'This appointment cannot be rescheduled in its current status',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CANCELLABLE]: {
+    ar: 'لا يمكن إلغاء هذا الموعد في حالته الحالية',
+    en: 'This appointment cannot be cancelled in its current status',
+  },
+  [CHATBOT_ERROR_CODES.CHATBOT_UNAVAILABLE]: {
+    ar: 'المساعد الذكي غير متاح حالياً. يمكنك إدخال سبب الزيارة يدوياً',
+    en: 'The chatbot is currently unavailable. You can enter the visit reason manually',
+  },
+  [CHATBOT_ERROR_CODES.CHATBOT_TURN_LIMIT]: {
+    ar: 'تم بلوغ الحد الأقصى لرسائل هذه المحادثة',
+    en: 'This conversation has reached the maximum number of messages',
+  },
+  [CHATBOT_ERROR_CODES.CHATBOT_SUMMARIZE_INVALID]: {
+    ar: 'تعذر تلخيص المحادثة. أعد المحاولة أو أدخل السبب يدوياً',
+    en: 'Could not summarize the conversation. Retry or enter the reason manually',
   },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
