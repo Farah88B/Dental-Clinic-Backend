@@ -957,16 +957,22 @@ async function ensureCompletedPlanEncountersAndMedia(
       title: string;
     }>
   > = {
+    // PHOTO must be a before/after pair (exactly 2) on the same encounter
     1: [
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — استشارة التبييض',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — استشارة التبييض',
+      },
       {
         key: 'report',
         type: MedicalAttachmentType.REPORT,
         title: 'تقرير تقييم اللون — قبل التبييض',
-      },
-      {
-        key: 'photoBefore',
-        type: MedicalAttachmentType.PHOTO,
-        title: 'صورة أساسية قبل التبييض',
       },
     ],
     2: [
