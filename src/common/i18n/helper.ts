@@ -184,11 +184,10 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.INVALID_TIME_FORMAT]: {
     ar: 'صيغة الوقت غير صحيحة. استخدم HH:mm مثل 09:00',
     en: 'Invalid time format. Use HH:mm such as 09:00',
-
+  },
   [ERROR_CODES.INVALID_OPERATION]: {
     ar: 'لا يمكن تنفيذ هذا الإجراء',
     en: 'This operation cannot be performed',
-
   },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
