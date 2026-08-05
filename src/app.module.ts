@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TerminusModule } from '@nestjs/terminus';
+import { ScheduleModule } from '@nestjs/schedule';
 import { envValidationSchema }from './config/env.validation';
 import configuration from './config/configuration';
 import { AppLoggerModule } from './common/logger/logger.module';
@@ -26,6 +27,12 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ClinicSettingsModule } from './modules/clinic-setting/clinic-settings.module';
 import { PatientFormModule } from './modules/patient-form/patient-form.module';
 import { PatientModule } from './modules/patient/patient.module';
+import { TreatmentPlanTemplatesModule } from './modules/treatment-plan-templates/treatment-plan-templates.module';
+import { TreatmentPlansModule } from './modules/treatment-plans/treatment-plans.module';
+import { TreatmentSessionsModule } from './modules/treatment-sessions/treatment-sessions.module';
+import { EncountersModule } from './modules/encounters/encounters.module';
+import { TreatmentSchedulerModule } from './modules/treatment-scheduler/treatment-scheduler.module';
+import { ContentModule } from './modules/content/content.module';
 
 @Module({
   imports: [
@@ -38,6 +45,7 @@ import { PatientModule } from './modules/patient/patient.module';
   validationSchema: envValidationSchema,
 
 }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60_000, // 1 minute window
@@ -58,6 +66,12 @@ import { PatientModule } from './modules/patient/patient.module';
      ClinicSettingsModule,
       PatientFormModule,
       PatientModule,
+      TreatmentPlanTemplatesModule,
+      TreatmentPlansModule,
+      TreatmentSessionsModule,
+      EncountersModule,
+      TreatmentSchedulerModule,
+      ContentModule,
   ],
   controllers: [AppController],
 providers: [

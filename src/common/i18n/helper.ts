@@ -1,6 +1,7 @@
 import { AUTH_ERROR_CODES } from "../constants/auth.constants";
 import { ERROR_CODES } from "../constants/error-codes.constants";
 import { OTP_ERROR_CODES } from "../constants/otp.constants";
+import { TREATMENT_ERROR_CODES } from "../constants/treatment.constants";
 export type Language = 'ar' | 'en';
 
 // Central message catalog. Keep error codes (used in ErrorResponseDto.code)
@@ -183,6 +184,58 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [AUTH_ERROR_CODES.ACCOUNT_ALREADY_INVITED]: {
     ar: 'هذا الحساب مدعو مسبقاً، يرجى إكمال عملية التفعيل',
     en: 'This account is already invited, please complete activation',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_ORDER_ALREADY_EXISTS]: {
+    ar: 'ترتيب الجلسة مستخدم مسبقًا ضمن هذا القالب',
+    en: 'This session order already exists within this template',
+  },
+  [TREATMENT_ERROR_CODES.TEMPLATE_HAS_NO_SESSIONS]: {
+    ar: 'قالب الخطة العلاجية لا يحتوي على أي جلسات',
+    en: 'The treatment plan template has no sessions',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_STARTABLE]: {
+    ar: 'لا يمكن بدء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be started in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_COMPLETABLE]: {
+    ar: 'لا يمكن إنهاء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be completed in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_CANCELLABLE]: {
+    ar: 'لا يمكن إلغاء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be cancelled in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_UPDATABLE]: {
+    ar: 'لا يمكن تعديل هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be updated in its current status',
+  },
+  [TREATMENT_ERROR_CODES.RATING_WINDOW_EXPIRED]: {
+    ar: 'انتهت مدة التقييم المسموحة لهذه الجلسة',
+    en: 'The rating window for this session has expired',
+  },
+  [TREATMENT_ERROR_CODES.RATING_ALREADY_SUBMITTED]: {
+    ar: 'تم تقييم هذه الجلسة مسبقًا',
+    en: 'This session has already been rated',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_RATEABLE]: {
+    ar: 'لا يمكن تقييم هذه الجلسة',
+    en: 'This session cannot be rated',
+  },
+  [TREATMENT_ERROR_CODES.INVALID_TEETH_LENGTH]: {
+    ar: 'مصفوفة الأسنان يجب أن تحتوي على 48 عنصرًا',
+    en: 'The teeth array must contain exactly 48 entries',
+  },
+  [TREATMENT_ERROR_CODES.APPOINTMENT_PATIENT_MISMATCH]: {
+    ar: 'الموعد لا يتبع لنفس المريض المرتبط بالخطة',
+    en: 'The appointment does not belong to the same patient as the plan',
+  },
+  [TREATMENT_ERROR_CODES.PLAN_STATUS_MUST_BE_CANCELLED]: {
+    ar: 'يمكن فقط تعيين حالة الخطة إلى ملغاة',
+    en: 'Treatment plan status can only be set to CANCELLED',
+  },
+  [TREATMENT_ERROR_CODES.INVALID_ATTACHMENT_FILE_COUNT]: {
+    ar: 'عدد الملفات غير صحيح لهذا النوع من المرفقات (صورة: ملفان بالضبط، أشعة/تقرير: ملف واحد على الأقل)',
+    en: 'Wrong file count for this attachment type (PHOTO: exactly 2 files; XRAY/REPORT: at least 1)',
   },
 };
 
