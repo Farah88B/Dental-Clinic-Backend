@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
+import { Request } from 'express';
 
 import { AuthenticatedAccount } from 'src/common/interfaces/authenticated-account.interface';
 import { AUTH_ERROR_CODES } from 'src/common/constants/auth.constants';
@@ -24,13 +25,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('jwt.accessSecret'),
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthenticatedAccount> {
+  async validate(request: Request, payload: JwtPayload): Promise<AuthenticatedAccount> {
     const account = await this.prisma.account.findUnique({ where: { id: payload.sub } });
+    const isMeRoute = request.originalUrl.split('?')[0].endsWith('/auth/me');
 
-    if (!account || account.status !== 'ACTIVE') {
+    if (!account || (!isMeRoute && account.status !== 'ACTIVE')) {
       throw new UnauthorizedException(AUTH_ERROR_CODES.INVALID_TOKEN);
     }
 

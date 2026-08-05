@@ -1,6 +1,7 @@
 import { AUTH_ERROR_CODES } from "../constants/auth.constants";
 import { ERROR_CODES } from "../constants/error-codes.constants";
 import { OTP_ERROR_CODES } from "../constants/otp.constants";
+import { TREATMENT_ERROR_CODES } from "../constants/treatment.constants";
 export type Language = 'ar' | 'en';
 
 // Central message catalog. Keep error codes (used in ErrorResponseDto.code)
@@ -22,6 +23,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.INVALID_TOKEN]: {
     ar: 'جلسة الدخول غير صالحة أو منتهية',
     en: 'Your session is invalid or has expired',
+  },
+  [ERROR_CODES.RATE_LIMIT_EXCEEDED]: {
+    ar: 'تم تجاوز الحد المسموح من الطلبات، حاول مرة أخرى لاحقًا',
+    en: 'Too many requests. Please try again later',
+  },
+  [AUTH_ERROR_CODES.INVALID_CREDENTIALS]: {
+    ar: 'رقم الهاتف أو كلمة المرور غير صحيحة',
+    en: 'Invalid phone number or password',
   },
   [ERROR_CODES.NOT_AUTHENTICATED]: {
     ar: 'يجب تسجيل الدخول للوصول لهذه الخدمة',
@@ -87,6 +96,10 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'لا يمكنك تعطيل حسابك الخاص أثناء تسجيل دخولك',
     en: 'You cannot disable your own account while logged in',
   },
+  [AUTH_ERROR_CODES.NEW_PHONE_SAME_AS_CURRENT]: {
+    ar: 'رقم الهاتف الجديد مطابق للرقم الحالي',
+    en: 'The new phone number is the same as your current one',
+  },
   [AUTH_ERROR_CODES.INCORRECT_PASSWORD]: {
     ar: 'كلمة المرور الحالية غير صحيحة',
     en: 'The current password is incorrect',
@@ -94,6 +107,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [AUTH_ERROR_CODES.ACCOUNT_NOT_ACTIVE]: {
     ar: 'الحساب غير نشط',
     en: 'The account is not active',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_NOT_ACTIVATED]: {
+    ar: 'الحساب غير مفعل، يرجى إكمال عملية التفعيل',
+    en: 'The account is not activated, please complete activation',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_PENDING_ACTIVATION]: {
+    ar: 'الحساب غير مفعل، يرجى إكمال عملية التحقق',
+    en: 'The account is pending activation, please complete verification',
   },
     [OTP_ERROR_CODES.OTP_EXPIRED]: {
     ar: 'انتهت صلاحية رمز التحقق',
@@ -111,6 +132,15 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'رمز التحقق مستخدم مسبقًا',
     en: 'Verification code has already been used',
   },
+  [OTP_ERROR_CODES.OTP_RESEND_TOO_SOON]: {
+  ar: 'يرجى الانتظار قبل طلب رمز تحقق جديد',
+  en: 'Please wait before requesting a new verification code',
+},
+
+[OTP_ERROR_CODES.OTP_RESEND_LIMIT_EXCEEDED]: {
+  ar: 'تم تجاوز الحد المسموح لإرسال رموز التحقق، يرجى المحاولة لاحقًا',
+  en: 'The maximum verification code resend limit has been exceeded, please try again later',
+},
   [AUTH_ERROR_CODES.ACCOUNT_NOT_INVITED]: {
     ar: 'هذا الحساب ليس بحالة دعوة',
     en: 'This account is not in invited status',
@@ -154,10 +184,79 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [ERROR_CODES.INVALID_TIME_FORMAT]: {
     ar: 'صيغة الوقت غير صحيحة. استخدم HH:mm مثل 09:00',
     en: 'Invalid time format. Use HH:mm such as 09:00',
+
+  [ERROR_CODES.INVALID_OPERATION]: {
+    ar: 'لا يمكن تنفيذ هذا الإجراء',
+    en: 'This operation cannot be performed',
+
   },
   [AUTH_ERROR_CODES.PASSWORDS_DO_NOT_MATCH]: {
     ar: 'كلمتا المرور غير متطابقتين',
     en: 'Passwords do not match',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_DISABLED]: {
+    ar: 'الحساب معطل، يرجى التواصل مع إدارة العيادة',
+    en: 'The account is disabled, please contact the clinic administration',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_ALREADY_EXISTS]: {
+    ar: 'الحساب موجود مسبقاً، يرجى تسجيل الدخول',
+    en: 'The account already exists, please sign in',
+  },
+  [AUTH_ERROR_CODES.ACCOUNT_ALREADY_INVITED]: {
+    ar: 'هذا الحساب مدعو مسبقاً، يرجى إكمال عملية التفعيل',
+    en: 'This account is already invited, please complete activation',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_ORDER_ALREADY_EXISTS]: {
+    ar: 'ترتيب الجلسة مستخدم مسبقًا ضمن هذا القالب',
+    en: 'This session order already exists within this template',
+  },
+  [TREATMENT_ERROR_CODES.TEMPLATE_HAS_NO_SESSIONS]: {
+    ar: 'قالب الخطة العلاجية لا يحتوي على أي جلسات',
+    en: 'The treatment plan template has no sessions',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_STARTABLE]: {
+    ar: 'لا يمكن بدء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be started in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_COMPLETABLE]: {
+    ar: 'لا يمكن إنهاء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be completed in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_CANCELLABLE]: {
+    ar: 'لا يمكن إلغاء هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be cancelled in its current status',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_UPDATABLE]: {
+    ar: 'لا يمكن تعديل هذه الجلسة في حالتها الحالية',
+    en: 'This session cannot be updated in its current status',
+  },
+  [TREATMENT_ERROR_CODES.RATING_WINDOW_EXPIRED]: {
+    ar: 'انتهت مدة التقييم المسموحة لهذه الجلسة',
+    en: 'The rating window for this session has expired',
+  },
+  [TREATMENT_ERROR_CODES.RATING_ALREADY_SUBMITTED]: {
+    ar: 'تم تقييم هذه الجلسة مسبقًا',
+    en: 'This session has already been rated',
+  },
+  [TREATMENT_ERROR_CODES.SESSION_NOT_RATEABLE]: {
+    ar: 'لا يمكن تقييم هذه الجلسة',
+    en: 'This session cannot be rated',
+  },
+  [TREATMENT_ERROR_CODES.INVALID_TEETH_LENGTH]: {
+    ar: 'مصفوفة الأسنان يجب أن تحتوي على 48 عنصرًا',
+    en: 'The teeth array must contain exactly 48 entries',
+  },
+  [TREATMENT_ERROR_CODES.APPOINTMENT_PATIENT_MISMATCH]: {
+    ar: 'الموعد لا يتبع لنفس المريض المرتبط بالخطة',
+    en: 'The appointment does not belong to the same patient as the plan',
+  },
+  [TREATMENT_ERROR_CODES.PLAN_STATUS_MUST_BE_CANCELLED]: {
+    ar: 'يمكن فقط تعيين حالة الخطة إلى ملغاة',
+    en: 'Treatment plan status can only be set to CANCELLED',
+  },
+  [TREATMENT_ERROR_CODES.INVALID_ATTACHMENT_FILE_COUNT]: {
+    ar: 'عدد الملفات غير صحيح لهذا النوع من المرفقات (صورة: ملفان بالضبط، أشعة/تقرير: ملف واحد على الأقل)',
+    en: 'Wrong file count for this attachment type (PHOTO: exactly 2 files; XRAY/REPORT: at least 1)',
   },
 };
 
@@ -167,6 +266,7 @@ const DEFAULT_LANGUAGE: Language = 'ar';
 export function isKnownErrorCode(code: string): boolean {
   return code in MESSAGES;
 }
+
 export function translate(code: string, lang: Language = DEFAULT_LANGUAGE): string {
   return (
   MESSAGES[code]?.[lang] ??

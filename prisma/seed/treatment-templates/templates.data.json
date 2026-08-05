@@ -1,0 +1,235 @@
+
+[
+  {
+    "nameAr": "علاج عصب",
+    "nameEn": "Root Canal Treatment",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 10,
+        "estimatedCost": 500
+      },
+      {
+        "titleAr": "تنظيف القنوات العصبية",
+        "titleEn": "Canal Cleaning",
+        "sessionOrder": 2,
+        "durationMinutes": 60,
+        "minDaysBeforeBooking": 7,
+        "estimatedCost": 75000
+      },
+      {
+        "titleAr": "حشو العصب النهائي",
+        "titleEn": "Root Canal Filling",
+        "sessionOrder": 3,
+        "durationMinutes": 45,
+        "minDaysBeforeBooking": 7,
+        "estimatedCost": 100000
+      }
+    ]
+  },
+  {
+    "nameAr": "تركيب تاج (تلبيسة)",
+    "nameEn": "Dental Crown",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 8,
+        "estimatedCost": 500
+      },
+      {
+        "titleAr": "تحضير السن وأخذ الطبعة",
+        "titleEn": "Tooth Preparation & Impression",
+        "sessionOrder": 2,
+        "durationMinutes": 60,
+        "minDaysBeforeBooking": 10,
+        "estimatedCost": 120000
+      },
+      {
+        "titleAr": "تركيب التاج النهائي",
+        "titleEn": "Crown Cementation",
+        "sessionOrder": 3,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 10,
+        "estimatedCost": 180000
+      }
+    ]
+  },
+  {
+    "nameAr": "زراعة سن",
+    "nameEn": "Dental Implant",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 5,
+        "estimatedCost": 100
+      },
+      {
+        "titleAr": "زرع الغرسة",
+        "titleEn": "Implant Placement",
+        "sessionOrder": 2,
+        "durationMinutes": 90,
+        "minDaysBeforeBooking": 14,
+        "estimatedCost": 500000
+      },
+      {
+        "titleAr": "كشف التئام الغرسة",
+        "titleEn": "Healing Check",
+        "sessionOrder": 3,
+        "durationMinutes": 25,
+        "minDaysBeforeBooking": 20,
+        "estimatedCost": 250000
+      },
+      {
+        "titleAr": "تركيب التاج على الغرسة",
+        "titleEn": "Implant Crown Placement",
+        "sessionOrder": 4,
+        "durationMinutes": 45,
+        "minDaysBeforeBooking": 7,
+        "estimatedCost": 250000
+      }
+    ]
+  },
+  {
+    "nameAr": "تقليح وتلميع الأسنان",
+    "nameEn": "Scaling and Polishing",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 5,
+        "estimatedCost": 1500
+      },
+      {
+        "titleAr": "إزالة الجير وتلميع الأسنان",
+        "titleEn": "Scaling & Polishing",
+        "sessionOrder": 2,
+        "durationMinutes": 45,
+        "minDaysBeforeBooking": 10,
+        "estimatedCost": 50000
+      }
+    ]
+  },
+  {
+    "nameAr": "حشوات تجميلية",
+    "nameEn": "Composite Fillings",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 1,
+        "estimatedCost": 150
+      },
+      {
+        "titleAr": "تحضير السن ووضع الحشوة",
+        "titleEn": "Composite Filling",
+        "sessionOrder": 2,
+        "durationMinutes": 45,
+        "minDaysBeforeBooking": 6,
+        "estimatedCost": 60000
+      }
+    ]
+  },
+  {
+    "nameAr": "تبييض الأسنان",
+    "nameEn": "Teeth Whitening",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 1,
+        "estimatedCost": 150
+      },
+      {
+        "titleAr": "جلسة التبييض",
+        "titleEn": "Whitening Session",
+        "sessionOrder": 2,
+        "durationMinutes": 60,
+        "minDaysBeforeBooking": 30,
+        "estimatedCost": 150000
+      },
+      {
+        "titleAr": "جلسة متابعة",
+        "titleEn": "Follow-up Session",
+        "sessionOrder": 3,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 14,
+        "estimatedCost": 100
+      }
+    ]
+  },
+  {
+    "nameAr": "خلع جراحي",
+    "nameEn": "Surgical Extraction",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 2,
+        "estimatedCost": 500
+      },
+      {
+        "titleAr": "إجراء الخلع",
+        "titleEn": "Surgical Extraction",
+        "sessionOrder": 2,
+        "durationMinutes": 60,
+        "minDaysBeforeBooking": 14,
+        "estimatedCost": 100000
+      },
+      {
+        "titleAr": "متابعة وإزالة الغرز",
+        "titleEn": "Post-operative Follow-up",
+        "sessionOrder": 3,
+        "durationMinutes": 20,
+        "minDaysBeforeBooking": 7,
+        "estimatedCost": 1500
+      }
+    ]
+  },
+  {
+    "nameAr": "تقويم الأسنان",
+    "nameEn": "Orthodontic Treatment",
+    "sessions": [
+      {
+        "titleAr": "زيارة أولى (استشارة)",
+        "titleEn": "First Visit (Consultation)",
+        "sessionOrder": 1,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 15,
+        "estimatedCost": 150
+      },
+      {
+        "titleAr": "تركيب جهاز التقويم",
+        "titleEn": "Braces Placement",
+        "sessionOrder": 2,
+        "durationMinutes": 90,
+        "minDaysBeforeBooking": 12,
+        "estimatedCost": 600000
+      },
+      {
+        "titleAr": "جلسة ضبط التقويم",
+        "titleEn": "Adjustment Visit",
+        "sessionOrder": 3,
+        "durationMinutes": 30,
+        "minDaysBeforeBooking": 30,
+        "estimatedCost": 50000
+      }
+    ]
+  }
+]

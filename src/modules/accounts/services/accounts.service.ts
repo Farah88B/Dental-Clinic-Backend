@@ -11,7 +11,9 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AccountAdapter } from '../adapter/account.adapter';
 import { AccountRolesService } from 'src/modules/account-roles/services/account-roles.service';
 import { accountSelect } from '../selectors/account.selector';
-
+import { AccountStatus } from '@prisma/client';
+// Role codes are business invariants, not request-scoped values.
+// DOCTOR is the admin-equivalent role in this system, so the code is kept static here.
 const DOCTOR_ROLE_CODE = 'DOCTOR';
 
 @Injectable()
@@ -22,6 +24,7 @@ export class AccountsService {
     private readonly accountRolesService: AccountRolesService,
   ) {}
 
+  // Return a paginated list of staff accounts for the admin UI.
   async list(pagination: PaginationDto) {
     const [accounts, total] = await Promise.all([
       this.prisma.account.findMany({
@@ -36,9 +39,8 @@ export class AccountsService {
     return new AdminListDto(items, total);
   }
 
+  // Return a single account with the response shape expected by the UI.
   async findOne(id: number) {
-    // findUniqueOrThrow -> Prisma P2025 on miss -> PrismaExceptionFilter
-    // (Epic 0) turns it into 404 NOT_FOUND automatically.
     const account = await this.prisma.account.findUniqueOrThrow({
       where: { id },
       select: accountSelect(),
@@ -47,17 +49,13 @@ export class AccountsService {
   }
 
   // UC: create staff account invitation
+  // Create an invited staff account and attach the selected role.
   async create(dto: CreateAccountDto, createdById: number) {
-    // No manual "does phone exist" check: if it does, Prisma throws P2002
-    // on create() -> PrismaExceptionFilter -> 409 DUPLICATE_VALUE.
-    // No manual "does role exist" check either: findUniqueOrThrow below
-    // throws P2025 -> 404 NOT_FOUND if roleId is invalid, BEFORE we touch
-    // the Account table, so we never create an orphaned account.
     await this.prisma.role.findUniqueOrThrow({ where: { id: dto.roleId } });
 
     const account = await this.prisma.$transaction(async (tx) => {
       const created = await tx.account.create({
-        data: { phone: dto.phone, status: 'INVITED', createdById },
+        data: { phone: dto.phone, status: AccountStatus.INVITED, createdById },
       });
 
       await tx.accountRole.create({
@@ -73,9 +71,8 @@ export class AccountsService {
     return this.accountAdapter.adapt(account);
   }
 
+  // Update the editable account fields.
   async update(id: number, dto: UpdateAccountDto) {
-    // No manual duplicate-phone check: P2002 on update() is handled the
-    // same way as create() above.
     const account = await this.prisma.account.update({
       where: { id },
       data: dto,
@@ -84,20 +81,18 @@ export class AccountsService {
     return this.accountAdapter.adapt(account);
   }
 
+  // Enable or disable an account with last-doctor and self-disable guards.
   async updateStatus(id: number, dto: UpdateAccountStatusDto, currentAccountId: number) {
     if (id === currentAccountId) {
       throw new ForbiddenException(AUTH_ERROR_CODES.CANNOT_DISABLE_SELF);
     }
 
-    if (dto.status === 'DISABLED') {
+    if (dto.status === AccountStatus.DISABLED) {
       const holdsDoctorRole = await this.prisma.accountRole.findFirst({
         where: { accountId: id, role: { code: DOCTOR_ROLE_CODE } },
       });
 
       if (holdsDoctorRole) {
-        // Counted BEFORE the update, so if this account is currently ACTIVE
-        // and holds DOCTOR, it's still included in the count — a result of
-        // exactly 1 means disabling it removes the last active doctor.
         const activeDoctorCount = await this.accountRolesService.countActiveHoldersOfRole(
           DOCTOR_ROLE_CODE,
         );
@@ -118,6 +113,7 @@ export class AccountsService {
   //TODO: delete this function
   // UC: admin resets a staff member's password directly (no OTP —
   // the admin is already authenticated and authorized via PermissionsGuard)
+  // Reset a staff password directly from the admin panel.
   async resetPassword(id: number, dto: ResetPasswordDto) {
     const password = await hashPassword(dto.newPassword);
     const account = await this.prisma.account.update({

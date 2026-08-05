@@ -17,7 +17,6 @@ import { Request, Response } from 'express';
 import { PinoLogger } from 'nestjs-pino';
 import { writeErrorResponse } from './write-error-response.util';
 import { resolveLanguageFromRequest } from '../i18n/helper';
-import { AuthenticatedAccount } from '../interfaces/authenticated-account.interface';
 
   import { ERROR_CODES } from '../constants/error-codes.constants';
 import { translate, isKnownErrorCode } from '../i18n/helper';
@@ -36,32 +35,47 @@ catch(exception: unknown, host: ArgumentsHost): void {
     exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
   const lang = resolveLanguageFromRequest(request as any);
 
+  const errorMap: Record<number, string> = {
+  [HttpStatus.BAD_REQUEST]: 'Bad Request',
+  [HttpStatus.UNAUTHORIZED]: 'Unauthorized',
+  [HttpStatus.FORBIDDEN]: 'Forbidden',
+  [HttpStatus.NOT_FOUND]: 'Not Found',
+  [HttpStatus.CONFLICT]: 'Conflict',
+  [HttpStatus.UNPROCESSABLE_ENTITY]: 'Unprocessable Entity',
+  [HttpStatus.TOO_MANY_REQUESTS]: 'Too Many Requests',
+  [HttpStatus.INTERNAL_SERVER_ERROR]: 'Internal Server Error',
+};
+
+let error = errorMap[statusCode] ?? 'Internal Server Error';
   let message = translate(ERROR_CODES.INTERNAL_ERROR, lang);
-  let error = 'Internal Server Error';
+
   let details: unknown = null;
 
   if (exception instanceof HttpException) {
     const exceptionResponse = exception.getResponse();
 
     if (typeof exceptionResponse === 'string') {
-  
-      const code = isKnownErrorCode(exceptionResponse) ? exceptionResponse : ERROR_CODES.INTERNAL_ERROR;
-      message = translate(code, lang);   
-      error = 'Bad Request';
+      message = isKnownErrorCode(exceptionResponse)
+        ? translate(exceptionResponse, lang)
+        : exceptionResponse;
+
+      error = errorMap[statusCode] ?? error;
     } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const body = exceptionResponse as Record<string, any>;
       error = body.error ?? error;
 
       if (Array.isArray(body.message)) {
-     
         message = 'Validation failed.';
         details = body.message.map((item: string) => ({ message: item }));
       } else if (typeof body.message === 'string' && isKnownErrorCode(body.message)) {
-        // حالة: throw new NotFoundException(ERROR_CODES.NOT_FOUND) بشكل Object {message: 'NOT_FOUND'}
         message = translate(body.message, lang);
       } else if (body.code) {
-        // حالة: Exception اترمت أصلًا بـ {code, message} (متل PrismaHttpExceptionMapperService)
         message = translate(body.code, lang);
+      } else if (typeof body.message === 'string' && body.message.trim()) {
+        message = body.message;
+      } else if (statusCode === HttpStatus.TOO_MANY_REQUESTS) {
+        message = translate(ERROR_CODES.RATE_LIMIT_EXCEEDED, lang);
+        error = 'Too Many Requests';
       } else {
         message = body.message ?? message;
       }

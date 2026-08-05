@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountStatus } from '@prisma/client';
 import { AUTH_ERROR_CODES } from 'src/common/constants/auth.constants';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
@@ -36,7 +37,7 @@ if (!role) {
       create: { accountId, roleId },
     });
   }
-  // modules/roles/services/account-roles.service.ts — إضافة method جديدة على الملف الموجود
+
 async getAuthenticatedAccountPayload(accountId: number) {
   const account = await this.prisma.account.findUnique({
   where: { id: accountId },
@@ -61,24 +62,22 @@ if (!account) {
   }));
 }
 
-// أضيفي هاد الـ method جوا AccountRolesService الموجودة، واستبدلي فحص revoke()
-// الحالي (prisma.accountRole.count) باستخدامها لضمان الاتساق:
 
 async countActiveHoldersOfRole(roleCode: string): Promise<number> {
   return this.prisma.accountRole.count({
     where: {
       role: { code: roleCode },
-      account: { status: 'ACTIVE' },
+      account: { status: AccountStatus.ACTIVE },
     },
   });
 }
 
- // وعدّلي revoke() الموجودة بالضبط بهاد الجزء:
+
 async revoke(accountId: number, roleId: number): Promise<void> {
   const role = await this.prisma.role.findUniqueOrThrow({ where: { id: roleId } });
   const account = await this.prisma.account.findUniqueOrThrow({ where: { id: accountId } });
 
-  if (role.code === DOCTOR_ROLE_CODE && account.status === 'ACTIVE') {
+  if (role.code === DOCTOR_ROLE_CODE && account.status === AccountStatus.ACTIVE) {
     const activeCount = await this.countActiveHoldersOfRole(DOCTOR_ROLE_CODE);
     if (activeCount <= 1) {
       throw new ForbiddenException(AUTH_ERROR_CODES.CANNOT_DISABLE_LAST_ADMIN);
