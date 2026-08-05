@@ -29,4 +29,11 @@ export class UpdateClinicSettingsDto {
   @ApiProperty({ required: false })
   @IsOptional() @IsBoolean()
   onlineBookingEnabled?: boolean;
+
+  @ApiProperty({
+    required: false,
+    description: 'How far ahead patients may book (days from today, clinic timezone)',
+  })
+  @IsOptional() @IsInt() @Min(1)
+  maxBookingHorizonDays?: number;
 }

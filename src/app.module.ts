@@ -26,6 +26,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClinicSettingsModule } from './modules/clinic-setting/clinic-settings.module';
 import { PatientFormModule } from './modules/patient-form/patient-form.module';
+import { ClinicScheduleModule } from './modules/clinic-schedule/clinic-schedule.module';
 import { PatientModule } from './modules/patient/patient.module';
 import { TreatmentPlanTemplatesModule } from './modules/treatment-plan-templates/treatment-plan-templates.module';
 import { TreatmentPlansModule } from './modules/treatment-plans/treatment-plans.module';
@@ -65,6 +66,7 @@ import { ContentModule } from './modules/content/content.module';
      AuthModule,
      ClinicSettingsModule,
       PatientFormModule,
+      ClinicScheduleModule,
       PatientModule,
       TreatmentPlanTemplatesModule,
       TreatmentPlansModule,

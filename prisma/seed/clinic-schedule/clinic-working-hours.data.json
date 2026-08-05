@@ -1,0 +1,51 @@
+[
+  {
+    "dayOfWeek": "SUNDAY",
+    "isWorkingDay": true,
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "MONDAY",
+    "isWorkingDay": true,
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "TUESDAY",
+    "isWorkingDay": true,
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "WEDNESDAY",
+    "isWorkingDay": true,
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "THURSDAY",
+    "isWorkingDay": true,
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "FRIDAY",
+    "isWorkingDay": false,
+    "startTime": null,
+    "endTime": null,
+    "breaks": []
+  },
+  {
+    "dayOfWeek": "SATURDAY",
+    "isWorkingDay": false,
+    "startTime": null,
+    "endTime": null,
+    "breaks": []
+  }
+]

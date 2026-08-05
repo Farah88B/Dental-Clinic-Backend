@@ -20,6 +20,8 @@ import { upsertDefaultTreatmentTemplates } from "./treatment-templates/treatment
 import { upsertDemoPatientJourney } from "./demo-patient-journey/demo-patient.seed";
 import { upsertDemoContent } from "./content/content.seed";
 
+import { upsertClinicWorkingHours } from "./clinic-schedule/clinic-working-hours.seed";
+
 const prisma = new PrismaService();
 
 
@@ -36,6 +38,8 @@ async function main(){
  await upsertDefaultPatientFormFields(prisma); 
 
  await upsertClinicSettings(prisma);
+
+ await upsertClinicWorkingHours(prisma);
 
  await upsertDefaultTreatmentTemplates(prisma);
 
