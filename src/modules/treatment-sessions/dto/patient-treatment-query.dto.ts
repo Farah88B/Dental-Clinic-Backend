@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MedicalAttachmentType, TreatmentSessionStatus } from '@prisma/client';
+import {
+  MedicalAttachmentType,
+  TreatmentPlanStatus,
+  TreatmentSessionStatus,
+} from '@prisma/client';
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
 export const PATIENT_SESSION_LIST_STATUSES = [
@@ -10,6 +14,15 @@ export const PATIENT_SESSION_LIST_STATUSES = [
 
 export type PatientSessionListStatus =
   (typeof PATIENT_SESSION_LIST_STATUSES)[number];
+
+export const PATIENT_PLAN_LIST_STATUSES = [
+  TreatmentPlanStatus.ACTIVE,
+  TreatmentPlanStatus.COMPLETED,
+  TreatmentPlanStatus.CANCELLED,
+] as const;
+
+export type PatientPlanListStatus =
+  (typeof PATIENT_PLAN_LIST_STATUSES)[number];
 
 export const PATIENT_MEDICAL_ARCHIVE_TYPES = [
   MedicalAttachmentType.XRAY,
@@ -24,6 +37,16 @@ export enum PatientSessionFileType {
   REPORT = 'REPORT',
   PHOTO = 'PHOTO',
   PRESCRIPTION = 'PRESCRIPTION',
+}
+
+export class ListPatientTreatmentPlansQueryDto {
+  @ApiPropertyOptional({
+    enum: PATIENT_PLAN_LIST_STATUSES,
+    description: 'Filter plans by status; omit to return all',
+  })
+  @IsOptional()
+  @IsIn(PATIENT_PLAN_LIST_STATUSES)
+  status?: PatientPlanListStatus;
 }
 
 export class ListPatientTreatmentSessionsQueryDto {

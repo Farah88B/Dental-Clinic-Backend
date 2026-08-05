@@ -15,6 +15,7 @@ import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { RateTreatmentSessionDto } from '../dto/rate-treatment-session.dto';
 import {
   PatientMedicalArchiveType,
+  PatientPlanListStatus,
   PatientSessionFileType,
   PatientSessionListStatus,
 } from '../dto/patient-treatment-query.dto';
@@ -100,14 +101,18 @@ export class PatientTreatmentService {
 
   async listPlans(
     patientId: number,
-    accountId: number,
+    access: PatientTreatmentAccess,
     preferredLanguage?: string,
+    status?: PatientPlanListStatus,
   ): Promise<PatientTreatmentPlanResponseDto[]> {
     const language = toUiLanguage(preferredLanguage);
-    await this.assertOwnedPatient(patientId, accountId);
+    await this.assertPatientAccess(patientId, access);
 
     const plans = await this.prisma.treatmentPlan.findMany({
-      where: { patientId },
+      where: {
+        patientId,
+        ...(status !== undefined && { status }),
+      },
       select: patientTreatmentPlanSummarySelect(),
       orderBy: { createdAt: 'desc' },
     });

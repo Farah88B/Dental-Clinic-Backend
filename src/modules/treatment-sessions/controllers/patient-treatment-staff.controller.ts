@@ -15,11 +15,13 @@ import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import {
   ListPatientMedicalArchiveQueryDto,
   ListPatientPlanSessionFilesQueryDto,
+  ListPatientTreatmentPlansQueryDto,
   ListPatientTreatmentSessionsQueryDto,
 } from '../dto/patient-treatment-query.dto';
 import {
   PatientMedicalArchiveItemResponseDto,
   PatientPlanSessionFilesResponseDto,
+  PatientTreatmentPlanResponseDto,
   PatientTreatmentSessionResponseDto,
 } from '../dto/patient-treatment-response.dto';
 import { PatientTreatmentService } from '../services/patient-treatment.service';
@@ -35,6 +37,26 @@ export class PatientTreatmentStaffController {
   constructor(
     private readonly patientTreatmentService: PatientTreatmentService,
   ) {}
+
+  @Get(':patientId/treatment-plans')
+  @RequirePermission('manage_treatment_sessions')
+  @ApiOperation({
+    summary:
+      'List patient treatment plan summaries (optional status filter; no nested sessions) — يُستخدم من: لوحة تحكم الطاقم',
+  })
+  @ApiBaseResponse(PatientTreatmentPlanResponseDto)
+  listPlans(
+    @Param('patientId', ParseIntPipe) patientId: number,
+    @ReqUser('preferredLanguage') preferredLanguage: string,
+    @Query() query: ListPatientTreatmentPlansQueryDto,
+  ) {
+    return this.patientTreatmentService.listPlans(
+      patientId,
+      { kind: 'staff' },
+      preferredLanguage,
+      query.status,
+    );
+  }
 
   @Get(':patientId/treatment-sessions/for-booking')
   @RequirePermission('manage_treatment_sessions')

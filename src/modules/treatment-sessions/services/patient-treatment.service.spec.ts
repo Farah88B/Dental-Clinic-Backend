@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { Decimal } from '@prisma/client/runtime/library';
-import { AppointmentStatus, TreatmentSessionStatus } from '@prisma/client';
+import { AppointmentStatus, TreatmentPlanStatus, TreatmentSessionStatus } from '@prisma/client';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { TreatmentSessionsService } from './treatment-sessions.service';
 import { PatientTreatmentService } from './patient-treatment.service';
@@ -66,7 +66,10 @@ describe('PatientTreatmentService', () => {
       },
     ]);
 
-    const result = await service.listPlans(7, 11);
+    const result = await service.listPlans(7, {
+      kind: 'patient',
+      accountId: 11,
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -80,6 +83,24 @@ describe('PatientTreatmentService', () => {
     expect(result[0]).not.toHaveProperty('template');
     expect(result[0]).not.toHaveProperty('actualCost');
     expect(result[0]).not.toHaveProperty('createdByAccountId');
+  });
+
+  it('listPlans() filters by status when provided', async () => {
+    prisma.patient.findUniqueOrThrow.mockResolvedValue({ id: 7 });
+    prisma.treatmentPlan.findMany.mockResolvedValue([]);
+
+    await service.listPlans(
+      7,
+      { kind: 'staff' },
+      undefined,
+      TreatmentPlanStatus.ACTIVE,
+    );
+
+    expect(prisma.treatmentPlan.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { patientId: 7, status: TreatmentPlanStatus.ACTIVE },
+      }),
+    );
   });
 
   it('getPlan() embeds pending rating, canBook/canTreat, and omits treatmentPlanId', async () => {
