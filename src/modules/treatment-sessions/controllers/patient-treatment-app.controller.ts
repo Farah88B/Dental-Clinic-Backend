@@ -18,6 +18,7 @@ import { TreatmentSessionResponseDto } from '../dto/treatment-session-response.d
 import {
   ListPatientMedicalArchiveQueryDto,
   ListPatientPlanSessionFilesQueryDto,
+  ListPatientTreatmentPlansQueryDto,
   ListPatientTreatmentSessionsQueryDto,
 } from '../dto/patient-treatment-query.dto';
 import {
@@ -80,18 +81,20 @@ export class PatientTreatmentAppController {
   @Get(':patientId/treatment-plans')
   @ApiOperation({
     summary:
-      'List patient treatment plan summaries (no nested sessions) — يُستخدم من: تطبيق المريض',
+      'List patient treatment plan summaries (optional status filter; no nested sessions) — يُستخدم من: تطبيق المريض',
   })
   @ApiBaseResponse(PatientTreatmentPlanResponseDto)
   listPlans(
     @Param('patientId', ParseIntPipe) patientId: number,
     @ReqUser('id') accountId: number,
     @ReqUser('preferredLanguage') preferredLanguage: string,
+    @Query() query: ListPatientTreatmentPlansQueryDto,
   ) {
     return this.patientTreatmentService.listPlans(
       patientId,
-      accountId,
+      { kind: 'patient', accountId },
       preferredLanguage,
+      query.status,
     );
   }
 

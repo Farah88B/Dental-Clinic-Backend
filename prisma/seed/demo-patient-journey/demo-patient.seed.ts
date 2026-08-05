@@ -17,7 +17,7 @@ import { PrismaService } from '../../../src/common/prisma/services/prisma.servic
 import { TREATMENT_CONSTANTS } from '../../../src/common/constants/treatment.constants';
 
 /**
- * Demo patient — two ACTIVE plans (August 2026 timeline).
+ * Demo patient — three plans (August 2026 timeline).
  *
  * Login patient: 0944444444 / 12345678  (MRN900001)
  * Login doctor:  0999999999 / 12345678
@@ -26,18 +26,22 @@ import { TREATMENT_CONSTANTS } from '../../../src/common/constants/treatment.con
  *   xrays/demo-xray-s2.jpg, reports/demo-report-s2.pdf,
  *   other/demo-photo-before.jpg, other/demo-photo-after.jpg
  *
- * Plan A (3 sessions — manual titles, marker on S2):
- *   1 COMPLETED + rated (Jul 2026) + actualCost 0
+ * Plan A ACTIVE (3 sessions — manual titles, marker on S2):
+ *   1 COMPLETED + rated + actualCost 0
  *   2 COMPLETED unrated (~1h ago) + actualCost 165000 + media
- *   3 PENDING — canBook today (availableForBookingAt = Aug 5); minDays=7 stored
+ *   3 PENDING — canBook today
  *
- * Plan B (Root Canal template — marker on S2):
- *   1 BOOKED + CONFIRMED appt (Aug 6) — canTreat, not canBook
- *   2 PENDING — canBook true (next waiting session)
+ * Plan B ACTIVE (Root Canal template — marker on S2):
+ *   1 BOOKED + CONFIRMED appt — canTreat
+ *   2 PENDING — canBook true
  *   3 PENDING — canBook false
+ *
+ * Plan C COMPLETED (Teeth Whitening template — marker on S2):
+ *   1–3 all COMPLETED + rated + actualCost (filter ?status=COMPLETED)
  */
 const DEMO_PLAN_A_S2_TITLE = 'Demo Plan A — Canal Cleaning';
 const DEMO_PLAN_B_S2_TITLE = 'Demo Plan B — Template Pending Second';
+const DEMO_PLAN_C_S2_TITLE = 'Demo Plan C — Completed Whitening Mid';
 /** Legacy single-plan marker — trimmed to Plan A on re-seed. */
 const LEGACY_PLAN_S2_TITLE = 'Demo Root Canal Session';
 
@@ -200,10 +204,25 @@ export async function upsertDemoPatientJourney(prisma: PrismaService) {
   const b2AvailableAt = startOfDay(augustDate(augDay));
   const b3AvailableAt = startOfDay(augustDate(Math.min(28, augDay + 14)));
 
+  /** Plan C — fully completed whitening (June → early July) */
+  const c1CompletedAt = new Date(2026, 5, 10, 11, 0, 0, 0); // Jun 10
+  const c2CompletedAt = new Date(2026, 5, 24, 11, 0, 0, 0); // Jun 24
+  const c3CompletedAt = new Date(2026, 6, 8, 11, 0, 0, 0); // Jul 8
+
   await migrateLegacySevenSessionPlan(prisma, patient.id);
 
-  const template = await prisma.treatmentPlanTemplate.findFirst({
+  const rootCanalTemplate = await prisma.treatmentPlanTemplate.findFirst({
     where: { nameEn: 'Root Canal Treatment', isActive: true },
+    include: {
+      sessionTemplates: {
+        where: { isActive: true },
+        orderBy: { sessionOrder: 'asc' },
+      },
+    },
+  });
+
+  const whiteningTemplate = await prisma.treatmentPlanTemplate.findFirst({
+    where: { nameEn: 'Teeth Whitening', isActive: true },
     include: {
       sessionTemplates: {
         where: { isActive: true },
@@ -223,13 +242,23 @@ export async function upsertDemoPatientJourney(prisma: PrismaService) {
     prisma,
     patient.id,
     doctor?.id ?? null,
-    template,
+    rootCanalTemplate,
     { b1AvailableAt, b1ScheduledAt, b2AvailableAt, b3AvailableAt, now },
+    defaultDuration,
+  );
+
+  const planC = await ensurePlanC(
+    prisma,
+    patient.id,
+    doctor?.id ?? null,
+    whiteningTemplate,
+    { c1CompletedAt, c2CompletedAt, c3CompletedAt },
     defaultDuration,
   );
 
   await recalculateDemoPlanCosts(prisma, planA.id);
   await recalculateDemoPlanCosts(prisma, planB.id);
+  await recalculateDemoPlanCosts(prisma, planC.id);
 
   await ensurePlanAAppointments(
     prisma,
@@ -249,10 +278,30 @@ export async function upsertDemoPatientJourney(prisma: PrismaService) {
     { b1ScheduledAt, now },
   );
 
+  await ensurePlanCAppointments(
+    prisma,
+    patient.id,
+    planC.sessions,
+    doctor?.id ?? null,
+    defaultDuration,
+    { c1CompletedAt, c2CompletedAt, c3CompletedAt },
+  );
+
   await ensurePlanAEncountersAndMedia(
     prisma,
     planA.sessions,
     doctor?.id ?? null,
+  );
+
+  await ensureCompletedPlanEncountersAndMedia(
+    prisma,
+    planC.sessions,
+    doctor?.id ?? null,
+    {
+      1: 'استشارة تبييض — تقييم لون الأسنان',
+      2: 'جلسة تبييض أولى مكتملة',
+      3: 'جلسة تبييض ثانية — انتهاء الخطة',
+    },
   );
 
   await ensureExtraStandaloneAppointments(
@@ -592,6 +641,142 @@ async function ensurePlanB(
   });
 }
 
+type TemplateWithSessions = {
+  id: number;
+  sessionTemplates: Array<{
+    titleAr: string;
+    titleEn: string;
+    sessionOrder: number;
+    durationMinutes: number | null;
+    minDaysBeforeBooking: number | null;
+    estimatedCost: { toString(): string } | number;
+  }>;
+} | null;
+
+async function ensurePlanC(
+  prisma: PrismaService,
+  patientId: number,
+  doctorId: number | null,
+  template: TemplateWithSessions,
+  dates: {
+    c1CompletedAt: Date;
+    c2CompletedAt: Date;
+    c3CompletedAt: Date;
+  },
+  defaultDuration: number,
+) {
+  if (!template?.sessionTemplates.length) {
+    throw new Error('Teeth Whitening template not found — seed templates first');
+  }
+
+  const { c1CompletedAt, c2CompletedAt, c3CompletedAt } = dates;
+  const tpl = template.sessionTemplates.slice(0, 3);
+  const t1 = tpl[0];
+  const t2 = tpl[1];
+  const t3 = tpl[2];
+
+  const completedDefs = [
+    {
+      order: 1,
+      tpl: t1,
+      completedAt: c1CompletedAt,
+      actualCost: 0,
+      titleEn: t1.titleEn,
+      rating: 5,
+    },
+    {
+      order: 2,
+      tpl: t2,
+      completedAt: c2CompletedAt,
+      actualCost: 155000,
+      titleEn: DEMO_PLAN_C_S2_TITLE,
+      rating: 4,
+    },
+    {
+      order: 3,
+      tpl: t3,
+      completedAt: c3CompletedAt,
+      actualCost: 105000,
+      titleEn: t3.titleEn,
+      rating: 5,
+    },
+  ] as const;
+
+  const existing = await prisma.treatmentPlan.findFirst({
+    where: {
+      patientId,
+      sessions: { some: { titleEn: DEMO_PLAN_C_S2_TITLE } },
+    },
+    include: { sessions: { orderBy: { sessionOrder: 'asc' } } },
+  });
+
+  if (existing) {
+    await prisma.treatmentPlan.update({
+      where: { id: existing.id },
+      data: {
+        status: TreatmentPlanStatus.COMPLETED,
+        templateId: template.id,
+        isActive: true,
+      },
+    });
+
+    for (const def of completedDefs) {
+      const session = existing.sessions.find((s) => s.sessionOrder === def.order);
+      if (!session || !def.tpl) continue;
+
+      await prisma.treatmentSession.update({
+        where: { id: session.id },
+        data: {
+          titleAr: def.tpl.titleAr,
+          titleEn: def.titleEn,
+          durationMinutes: def.tpl.durationMinutes ?? defaultDuration,
+          minDaysBeforeBooking: def.tpl.minDaysBeforeBooking ?? 0,
+          estimatedCost: Number(def.tpl.estimatedCost),
+          actualCost: def.actualCost,
+          status: TreatmentSessionStatus.COMPLETED,
+          completedAt: def.completedAt,
+          rating: def.rating,
+          ratedAt: def.completedAt,
+          availableForBookingAt: def.completedAt,
+        },
+      });
+    }
+
+    return prisma.treatmentPlan.findUniqueOrThrow({
+      where: { id: existing.id },
+      include: { sessions: { orderBy: { sessionOrder: 'asc' } } },
+    });
+  }
+
+  return prisma.treatmentPlan.create({
+    data: {
+      patientId,
+      createdByAccountId: doctorId,
+      templateId: template.id,
+      status: TreatmentPlanStatus.COMPLETED,
+      estimatedCost: 0,
+      actualCost: 0,
+      sessions: {
+        create: completedDefs.map((def) => ({
+          titleAr: def.tpl.titleAr,
+          titleEn: def.titleEn,
+          sessionOrder: def.order,
+          durationMinutes: def.tpl.durationMinutes ?? defaultDuration,
+          minDaysBeforeBooking: def.tpl.minDaysBeforeBooking ?? 0,
+          estimatedCost: Number(def.tpl.estimatedCost),
+          actualCost: def.actualCost,
+          status: TreatmentSessionStatus.COMPLETED,
+          completedAt: def.completedAt,
+          rating: def.rating,
+          ratedAt: def.completedAt,
+          availableForBookingAt: def.completedAt,
+        })),
+      },
+    },
+    include: { sessions: { orderBy: { sessionOrder: 'asc' } } },
+  });
+}
+
 async function ensurePlanAEncountersAndMedia(
   prisma: PrismaService,
   sessions: { id: number; sessionOrder: number; status: TreatmentSessionStatus }[],
@@ -699,6 +884,164 @@ async function ensurePlanBAppointments(
     durationMinutes,
     defs,
   );
+}
+
+async function ensurePlanCAppointments(
+  prisma: PrismaService,
+  patientId: number,
+  sessions: { id: number; sessionOrder: number }[],
+  doctorId: number | null,
+  durationMinutes: number,
+  dates: {
+    c1CompletedAt: Date;
+    c2CompletedAt: Date;
+    c3CompletedAt: Date;
+  },
+) {
+  const defs = [
+    {
+      order: 1,
+      status: AppointmentStatus.COMPLETED,
+      type: AppointmentType.CONSULTATION,
+      scheduledAt: dates.c1CompletedAt,
+      confirmedAt: dates.c1CompletedAt,
+      checkedInAt: dates.c1CompletedAt,
+      completedAt: dates.c1CompletedAt,
+    },
+    {
+      order: 2,
+      status: AppointmentStatus.COMPLETED,
+      type: AppointmentType.FOLLOW_UP,
+      scheduledAt: dates.c2CompletedAt,
+      confirmedAt: dates.c2CompletedAt,
+      checkedInAt: dates.c2CompletedAt,
+      completedAt: dates.c2CompletedAt,
+    },
+    {
+      order: 3,
+      status: AppointmentStatus.COMPLETED,
+      type: AppointmentType.FOLLOW_UP,
+      scheduledAt: dates.c3CompletedAt,
+      confirmedAt: dates.c3CompletedAt,
+      checkedInAt: dates.c3CompletedAt,
+      completedAt: dates.c3CompletedAt,
+    },
+  ];
+
+  await upsertSessionAppointments(
+    prisma,
+    patientId,
+    sessions,
+    doctorId,
+    durationMinutes,
+    defs,
+  );
+}
+
+async function ensureCompletedPlanEncountersAndMedia(
+  prisma: PrismaService,
+  sessions: { id: number; sessionOrder: number; status: TreatmentSessionStatus }[],
+  doctorId: number | null,
+  diagnosisByOrder: Record<number, string>,
+) {
+  const emptyTeeth = Array.from({ length: TREATMENT_CONSTANTS.TEETH_COUNT }, (_, i) => ({
+    index: i + 1,
+    value: null,
+  }));
+
+  const mediaByOrder: Record<
+    number,
+    Array<{
+      key: keyof typeof SEED_MEDIA;
+      type: MedicalAttachmentType;
+      title: string;
+    }>
+  > = {
+    // PHOTO must be a before/after pair (exactly 2) on the same encounter
+    1: [
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — استشارة التبييض',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — استشارة التبييض',
+      },
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير تقييم اللون — قبل التبييض',
+      },
+    ],
+    2: [
+      {
+        key: 'xray',
+        type: MedicalAttachmentType.XRAY,
+        title: 'أشعة قبل جلسة التبييض الأولى',
+      },
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير جلسة التبييض الأولى',
+      },
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — جلسة 1',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — جلسة 1',
+      },
+    ],
+    3: [
+      {
+        key: 'report',
+        type: MedicalAttachmentType.REPORT,
+        title: 'تقرير ختامي — انتهاء التبييض',
+      },
+      {
+        key: 'photoBefore',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة قبل — جلسة 2',
+      },
+      {
+        key: 'photoAfter',
+        type: MedicalAttachmentType.PHOTO,
+        title: 'صورة بعد — جلسة 2',
+      },
+    ],
+  };
+
+  for (const session of sessions.filter(
+    (s) => s.status === TreatmentSessionStatus.COMPLETED,
+  )) {
+    let encounter = await prisma.encounter.findUnique({
+      where: { treatmentSessionId: session.id },
+    });
+
+    if (!encounter) {
+      encounter = await prisma.encounter.create({
+        data: {
+          treatmentSessionId: session.id,
+          status: EncounterStatus.COMPLETED,
+          diagnosis: diagnosisByOrder[session.sessionOrder] ?? 'خطة مكتملة',
+          clinicalNotes: 'ملاحظات سريرية — خطة مكتملة (Plan C) مع مرفقات',
+          prescription:
+            session.sessionOrder === 3
+              ? 'معجون حساس الأسنان مرتين يومياً × أسبوعين'
+              : null,
+          teeth: emptyTeeth,
+        },
+      });
+    }
+
+    const specs = mediaByOrder[session.sessionOrder] ?? [];
+    await ensureEncounterMedia(prisma, encounter.id, doctorId, specs);
+  }
 }
 
 async function upsertSessionAppointments(
@@ -839,18 +1182,25 @@ async function ensureSession2Media(
   encounterId: number | undefined,
   doctorId: number | null,
 ) {
-  if (!encounterId) return;
-
-  const specs: Array<{
-    key: keyof typeof SEED_MEDIA;
-    type: MedicalAttachmentType;
-    title: string;
-  }> = [
+  await ensureEncounterMedia(prisma, encounterId, doctorId, [
     { key: 'xray', type: MedicalAttachmentType.XRAY, title: 'أشعة قبل العلاج' },
     { key: 'report', type: MedicalAttachmentType.REPORT, title: 'تقرير طبي' },
     { key: 'photoBefore', type: MedicalAttachmentType.PHOTO, title: 'صورة قبل' },
     { key: 'photoAfter', type: MedicalAttachmentType.PHOTO, title: 'صورة بعد' },
-  ];
+  ]);
+}
+
+async function ensureEncounterMedia(
+  prisma: PrismaService,
+  encounterId: number | undefined,
+  doctorId: number | null,
+  specs: Array<{
+    key: keyof typeof SEED_MEDIA;
+    type: MedicalAttachmentType;
+    title: string;
+  }>,
+) {
+  if (!encounterId || specs.length === 0) return;
 
   for (const item of specs) {
     const media = await registerMediaIfPresent(prisma, SEED_MEDIA[item.key], doctorId);
