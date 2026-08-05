@@ -9,6 +9,7 @@ export class ClinicSettingsResponseDto {
   @ApiProperty() ratingValidityHours!: number;
   @ApiProperty() autoConfirmationEnabled!: boolean;
   @ApiProperty() onlineBookingEnabled!: boolean;
+  @ApiProperty() maxBookingHorizonDays!: number;
   @ApiProperty() updatedAt!: Date;
 
   constructor(partial: Partial<ClinicSettingsResponseDto>) {

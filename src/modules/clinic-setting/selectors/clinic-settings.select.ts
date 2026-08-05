@@ -10,6 +10,7 @@ export const clinicSettingsSelect = () => {
     ratingValidityHours: true,
     autoConfirmationEnabled: true,
     onlineBookingEnabled: true,
+    maxBookingHorizonDays: true,
     updatedAt: true,
   });
 };

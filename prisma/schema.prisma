@@ -105,6 +105,9 @@ model Account {
 
   updatedClinicSettings ClinicSettings? @relation("ClinicSettingsUpdater")
 
+  clinicWorkingHoursUpdates ClinicWorkingHours[] @relation("ClinicWorkingHoursUpdater")
+  createdScheduleExceptions ClinicScheduleException[] @relation("ClinicScheduleExceptionCreator")
+
   roles AccountRole[]
 
   otpVerifications OtpVerification[]
@@ -168,12 +171,62 @@ model ClinicSettings {
   ratingValidityHours                 Int     @default(5)
   autoConfirmationEnabled             Boolean @default(false)
   onlineBookingEnabled                Boolean @default(true)
+  maxBookingHorizonDays               Int     @default(30)
 
   updatedByAccountId Int? @unique
   updatedBy          Account? @relation("ClinicSettingsUpdater", fields: [updatedByAccountId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+/// Weekly clinic opening pattern (single-clinic / single-doctor assumption).
+model ClinicWorkingHours {
+  id Int @id @default(autoincrement())
+
+  dayOfWeek    DayOfWeek @unique
+  isWorkingDay Boolean   @default(true)
+
+  /// Minutes from midnight (540 = 09:00). Null when not a working day.
+  startMinute Int?
+  endMinute   Int?
+  /// [{ startMinute, endMinute }] — must lie fully inside [startMinute, endMinute]
+  breaks      Json?
+
+  updatedByAccountId Int?
+  updatedBy          Account? @relation("ClinicWorkingHoursUpdater", fields: [updatedByAccountId], references: [id])
+  updatedAt          DateTime @updatedAt
+}
+
+/// Per-date override of the weekly pattern (holiday / special hours).
+model ClinicScheduleException {
+  id Int @id @default(autoincrement())
+
+  date         DateTime @unique @db.Date
+  isWorkingDay Boolean
+
+  startMinute Int?
+  endMinute   Int?
+  breaks      Json?
+
+  reason String?
+
+  createdByAccountId Int
+  createdBy          Account @relation("ClinicScheduleExceptionCreator", fields: [createdByAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum PatientStatus {
   ACTIVE
   ARCHIVED
@@ -190,6 +243,10 @@ enum PatientFormFieldType {
 enum Gender {
   MALE
   FEMALE
+}
+model MedicalRecordNumberCounter {
+  id Int @id
+  lastValue Int @default(0)
 }
 model Patient {
 
@@ -282,28 +339,38 @@ model PatientFormFieldValue {
   @@index([fieldDefinitionId])
 
 }
-model MediaFile {
+enum MediaFileCategory {
+  PROFILE_IMAGE
+  XRAY
+  REPORT
+  PRESCRIPTION
+  CONTENT_IMAGE
+  OTHER
+}
 
+model MediaFile {
   id Int @id @default(autoincrement())
 
   originalName String
-  path String  @unique
-  mimeType String
-  size Int
+  storedName   String @unique
+  path         String @unique
+  mimeType     String
+  size         Int
+  category     MediaFileCategory
 
   uploadedByAccountId Int?
-  uploadedByAccount Account?  @relation(fields: [uploadedByAccountId], references: [id])
+  uploadedByAccount   Account? @relation(fields: [uploadedByAccountId], references: [id])
 
-  patientProfile Patient[]  
+  patientProfile Patient[]
 
- // medicalAttachments MedicalAttachment[]
-
- // contentMedia ContentMediaFile[]
+  // medicalAttachments MedicalAttachment[]
+  // contentMedia ContentMediaFile[]
 
   createdAt DateTime @default(now())
 
   @@index([uploadedByAccountId])
   @@index([mimeType])
+  @@index([category])
   @@index([createdAt])
-
 }
+

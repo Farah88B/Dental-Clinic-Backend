@@ -25,6 +25,8 @@ JWT_REFRESH_SECRET:
   Joi.string()
     .min(32)
     .required(),
+
+  CLINIC_TIMEZONE: Joi.string().default('Asia/Damascus'),
 });
 
 // this service will validate the environment variables using the above schema. If any of the required variables are missing or invalid, it will throw an error and prevent the application from starting.

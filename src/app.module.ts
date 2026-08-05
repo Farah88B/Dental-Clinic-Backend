@@ -24,6 +24,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClinicSettingsModule } from './modules/clinic-setting/clinic-settings.module';
 import { PatientFormModule } from './modules/patient-form/patient-form.module';
+import { ClinicScheduleModule } from './modules/clinic-schedule/clinic-schedule.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { PatientFormModule } from './modules/patient-form/patient-form.module';
      AuthModule,
      ClinicSettingsModule,
       PatientFormModule,
+      ClinicScheduleModule,
   ],
   controllers: [AppController],
 providers: [

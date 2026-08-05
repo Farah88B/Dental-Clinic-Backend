@@ -17,6 +17,8 @@ import { upsertClinicSettings } from "./clinic-settings/clinic-settings.seed";
 
 import { upsertDefaultPatientFormFields } from "./patient-form-fields/patient-form-field.seed";
 
+import { upsertClinicWorkingHours } from "./clinic-schedule/clinic-working-hours.seed";
+
 const prisma = new PrismaService();
 
 
@@ -33,6 +35,8 @@ async function main(){
  await upsertDefaultPatientFormFields(prisma); 
 
  await upsertClinicSettings(prisma);
+
+ await upsertClinicWorkingHours(prisma);
 
 }
 
