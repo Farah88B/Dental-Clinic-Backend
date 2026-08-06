@@ -67,6 +67,7 @@ Prisma raw error → `PrismaErrorHandlerService` (domain exceptions) → `Prisma
 - Account statuses: `PENDING_ACTIVATION` → (OTP verify) → `ACTIVE`; `INVITED` → (activation) → `ACTIVE`
 - SMS in stub mode by default (logs instead of sending, static OTP: `123456`)
 - `MedicalRecordNumberCounter` generates incremental MRNs (`MRN000001`)
+- Appointments: after clinic day ends, past `PENDING_CONFIRMATION`/`CONFIRMED` without check-in → `NO_SHOW`; linked `BOOKED` session → `PENDING` (EC-2)
 
 ## Setup
 1. Copy `.env.example` to `.env`, configure `DATABASE_URL` (PostgreSQL)

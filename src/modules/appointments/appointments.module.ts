@@ -5,6 +5,7 @@ import { AppointmentAppController } from './controllers/appointment-app.controll
 import { AppointmentDashboardController } from './controllers/appointment-dashboard.controller';
 import { AppointmentSharedController } from './controllers/appointment-shared.controller';
 import { AppointmentAvailabilityService } from './services/appointment-availability.service';
+import { AppointmentNoShowScheduler } from './services/appointment-no-show.scheduler';
 import { AppointmentQueryService } from './services/appointment-query.service';
 import { AppointmentService } from './services/appointment.service';
 
@@ -20,6 +21,7 @@ import { AppointmentService } from './services/appointment.service';
     AppointmentQueryService,
     AppointmentAvailabilityService,
     AppointmentAdapter,
+    AppointmentNoShowScheduler,
   ],
   exports: [
     AppointmentService,
