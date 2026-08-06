@@ -13,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
@@ -21,12 +22,12 @@ import { AuditAction } from 'src/common/decorators/audit-user-action.decorator';
 import { ReqUser } from 'src/common/decorators/req-user.decorator';
 import {
   HasPagination,
-  PaginationQuery,
 } from 'src/common/pagination/pagination-query-params.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AppointmentResponseDto } from '../dto/appointment-response.dto';
 import {
   AppointmentListItemDto,
+  AppointmentListScope,
   PatientAppointmentListQueryDto,
   UpcomingAppointmentQueryDto,
 } from '../dto/appointment-list.dto';
@@ -67,9 +68,17 @@ export class AppointmentAppController {
   @ApiOperation({
     summary: 'List patient appointments by scope UPCOMING|PAST - Patient App',
   })
+  @ApiQuery({ name: 'patientId', required: true, type: Number })
+  @ApiQuery({
+    name: 'scope',
+    required: true,
+    enum: AppointmentListScope,
+    description:
+      'UPCOMING: PENDING_CONFIRMATION|CONFIRMED|CHECKED_IN|IN_TREATMENT | PAST: COMPLETED|CANCELLED|NO_SHOW',
+  })
   @ApiPaginatedResponse(AppointmentListItemDto)
   list(
-    @PaginationQuery() query: PatientAppointmentListQueryDto,
+    @Query() query: PatientAppointmentListQueryDto,
     @ReqUser('id') accountId: number,
   ) {
     return this.appointmentQueryService.listForPatient(query, accountId);

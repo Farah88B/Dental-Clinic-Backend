@@ -6,6 +6,7 @@ import { AppointmentAdapter } from '../adapter/appointment.adapter';
 import { AppointmentListScope } from '../dto/appointment-list.dto';
 import {
   AppointmentQueryService,
+  PAST_APPOINTMENT_STATUSES,
   UPCOMING_APPOINTMENT_STATUSES,
 } from './appointment-query.service';
 
@@ -94,7 +95,7 @@ describe('AppointmentQueryService', () => {
     );
   });
 
-  it('lists PAST with descending order and terminal statuses or past time', async () => {
+  it('lists PAST by terminal statuses only', async () => {
     prisma.appointment.findMany.mockResolvedValue([]);
     prisma.appointment.count.mockResolvedValue(0);
 
@@ -112,9 +113,10 @@ describe('AppointmentQueryService', () => {
 
     expect(prisma.appointment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          OR: expect.any(Array),
-        }),
+        where: {
+          patientId: 7,
+          status: { in: PAST_APPOINTMENT_STATUSES },
+        },
         orderBy: { scheduledAt: 'desc' },
       }),
     );

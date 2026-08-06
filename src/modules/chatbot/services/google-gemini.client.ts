@@ -24,6 +24,9 @@ export class GoogleGeminiClient extends GeminiClient {
       this.configService.get<string>('gemini.model') ??
       CHATBOT_CONSTANTS.DEFAULT_MODEL;
     this.ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+    // #region agent log
+    fetch('http://127.0.0.1:7564/ingest/78ba0ab3-38f9-48ac-adfb-dc88ebea651c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b5c963'},body:JSON.stringify({sessionId:'b5c963',runId:'pre-fix',hypothesisId:'A',location:'google-gemini.client.ts:constructor',message:'Gemini client init',data:{hasApiKey:Boolean(apiKey),apiKeyLength:apiKey.length,model:this.model,aiInitialized:Boolean(this.ai)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }
 
   async createTurn(input: {
@@ -66,7 +69,13 @@ export class GoogleGeminiClient extends GeminiClient {
       schema?: GeminiJsonSchema;
     };
   }): Promise<GeminiChatResult> {
+    // #region agent log
+    fetch('http://127.0.0.1:7564/ingest/78ba0ab3-38f9-48ac-adfb-dc88ebea651c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b5c963'},body:JSON.stringify({sessionId:'b5c963',runId:'pre-fix',hypothesisId:'A',location:'google-gemini.client.ts:runInteraction',message:'runInteraction entry',data:{aiNull:!this.ai,model:this.model,hasPrevId:Boolean(params.previous_interaction_id),hasSchema:Boolean(params.response_format?.schema)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!this.ai) {
+      // #region agent log
+      fetch('http://127.0.0.1:7564/ingest/78ba0ab3-38f9-48ac-adfb-dc88ebea651c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b5c963'},body:JSON.stringify({sessionId:'b5c963',runId:'pre-fix',hypothesisId:'A',location:'google-gemini.client.ts:runInteraction:noAi',message:'CHATBOT_UNAVAILABLE due to missing Gemini client',data:{reason:'ai_null_no_api_key'},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       throw new ServiceUnavailableException(
         CHATBOT_ERROR_CODES.CHATBOT_UNAVAILABLE,
       );
@@ -83,6 +92,10 @@ export class GoogleGeminiClient extends GeminiClient {
         throw new Error('Gemini interaction missing id');
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7564/ingest/78ba0ab3-38f9-48ac-adfb-dc88ebea651c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b5c963'},body:JSON.stringify({sessionId:'b5c963',runId:'pre-fix',hypothesisId:'D',location:'google-gemini.client.ts:runInteraction:success',message:'Gemini interaction ok',data:{interactionIdLen:interaction.id.length,outputLen:outputText.length},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+
       return {
         interactionId: interaction.id,
         outputText,
@@ -91,6 +104,9 @@ export class GoogleGeminiClient extends GeminiClient {
       if (error instanceof ServiceUnavailableException) {
         throw error;
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7564/ingest/78ba0ab3-38f9-48ac-adfb-dc88ebea651c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b5c963'},body:JSON.stringify({sessionId:'b5c963',runId:'pre-fix',hypothesisId:'D',location:'google-gemini.client.ts:runInteraction:catch',message:'Gemini API call failed',data:{err:error instanceof Error ? error.message : String(error),errName:error instanceof Error ? error.name : typeof error},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       this.logger.error(
         {
           err: error instanceof Error ? error.message : String(error),

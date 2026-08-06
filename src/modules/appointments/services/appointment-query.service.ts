@@ -18,12 +18,19 @@ import {
   appointmentListSelect,
 } from '../selectors/appointment.select';
 
-/** Statuses that still count as an "upcoming" visit when scheduledAt is in the future. */
+/** Active / in-progress statuses shown under patient list scope UPCOMING. */
 export const UPCOMING_APPOINTMENT_STATUSES: AppointmentStatus[] = [
   AppointmentStatus.PENDING_CONFIRMATION,
   AppointmentStatus.CONFIRMED,
   AppointmentStatus.CHECKED_IN,
   AppointmentStatus.IN_TREATMENT,
+];
+
+/** Terminal statuses shown under patient list scope PAST. */
+export const PAST_APPOINTMENT_STATUSES: AppointmentStatus[] = [
+  AppointmentStatus.COMPLETED,
+  AppointmentStatus.CANCELLED,
+  AppointmentStatus.NO_SHOW,
 ];
 
 @Injectable()
@@ -163,7 +170,6 @@ export class AppointmentQueryService {
   private upcomingWhere(patientId: number): Prisma.AppointmentWhereInput {
     return {
       patientId,
-      scheduledAt: { gte: new Date() },
       status: { in: UPCOMING_APPOINTMENT_STATUSES },
     };
   }
@@ -171,18 +177,7 @@ export class AppointmentQueryService {
   private pastWhere(patientId: number): Prisma.AppointmentWhereInput {
     return {
       patientId,
-      OR: [
-        { scheduledAt: { lt: new Date() } },
-        {
-          status: {
-            in: [
-              AppointmentStatus.COMPLETED,
-              AppointmentStatus.CANCELLED,
-              AppointmentStatus.NO_SHOW,
-            ],
-          },
-        },
-      ],
+      status: { in: PAST_APPOINTMENT_STATUSES },
     };
   }
 

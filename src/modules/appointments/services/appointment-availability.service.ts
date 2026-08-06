@@ -92,17 +92,7 @@ export class AppointmentAvailabilityService {
     this.assertOnlineBookingIfApp(access, settings);
 
     if (query.type === AppointmentType.CONSULTATION) {
-      const open = await this.prisma.appointment.findFirst({
-        where: {
-          patientId: query.patientId,
-          type: AppointmentType.CONSULTATION,
-          status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
-        },
-        select: { id: true },
-      });
-      if (open) {
-        return [];
-      }
+      await this.assertNoActiveConsultation(query.patientId);
     }
 
     const session =
@@ -184,17 +174,7 @@ export class AppointmentAvailabilityService {
     this.assertOnlineBookingIfApp(access, settings);
 
     if (query.type === AppointmentType.CONSULTATION) {
-      const open = await this.prisma.appointment.findFirst({
-        where: {
-          patientId: query.patientId,
-          type: AppointmentType.CONSULTATION,
-          status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
-        },
-        select: { id: true },
-      });
-      if (open) {
-        return [];
-      }
+      await this.assertNoActiveConsultation(query.patientId);
     }
 
     const session =
@@ -319,6 +299,22 @@ export class AppointmentAvailabilityService {
     if (access.source === 'APP' && !settings.onlineBookingEnabled) {
       throw new ForbiddenException(
         APPOINTMENT_ERROR_CODES.ONLINE_BOOKING_DISABLED,
+      );
+    }
+  }
+
+  private async assertNoActiveConsultation(patientId: number): Promise<void> {
+    const open = await this.prisma.appointment.findFirst({
+      where: {
+        patientId,
+        type: AppointmentType.CONSULTATION,
+        status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
+      },
+      select: { id: true },
+    });
+    if (open) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.ACTIVE_CONSULTATION_EXISTS,
       );
     }
   }

@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -20,10 +21,7 @@ import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorat
 import { AuditAction } from 'src/common/decorators/audit-user-action.decorator';
 import { ReqUser } from 'src/common/decorators/req-user.decorator';
 import { RequirePermission } from 'src/common/decorators/require-permission.decorator';
-import {
-  HasPagination,
-  PaginationQuery,
-} from 'src/common/pagination/pagination-query-params.decorator';
+import { HasPagination } from 'src/common/pagination/pagination-query-params.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { AppointmentResponseDto } from '../dto/appointment-response.dto';
@@ -67,7 +65,7 @@ export class AppointmentDashboardController {
   })
   @ApiQuery({ name: 'sortDirection', required: false, enum: ['asc', 'desc'] })
   @ApiBaseResponse(AppointmentStaffListResponseDto)
-  list(@PaginationQuery() query: AppointmentListQueryDto) {
+  list(@Query() query: AppointmentListQueryDto) {
     return this.appointmentQueryService.listForStaff(query);
   }
 
