@@ -34,6 +34,8 @@ import { TreatmentSessionsModule } from './modules/treatment-sessions/treatment-
 import { EncountersModule } from './modules/encounters/encounters.module';
 import { TreatmentSchedulerModule } from './modules/treatment-scheduler/treatment-scheduler.module';
 import { ContentModule } from './modules/content/content.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -74,6 +76,8 @@ import { ContentModule } from './modules/content/content.module';
       EncountersModule,
       TreatmentSchedulerModule,
       ContentModule,
+      AppointmentsModule,
+      ChatbotModule,
   ],
   controllers: [AppController],
 providers: [

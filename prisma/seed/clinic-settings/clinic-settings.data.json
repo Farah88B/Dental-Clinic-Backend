@@ -6,5 +6,8 @@
   "ratingValidityHours": 5,
   "autoConfirmationEnabled": false,
   "onlineBookingEnabled": true,
-  "maxBookingHorizonDays": 30
+  "maxBookingHorizonDays": 30,
+  "latitude": 33.5138,
+  "longitude": 36.2765,
+  "checkInRadiusMeters": 150
 }

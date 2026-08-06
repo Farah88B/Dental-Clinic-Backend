@@ -34,7 +34,7 @@ export class DeleteScheduleExceptionQueryDto {
     required: false,
     default: false,
     description:
-      'Confirm despite appointment conflicts — TODO(Appointments): BR-50',
+      'Set true to delete even when reverting to weekly hours conflicts with appointments that day. Appointments are not cancelled.',
   })
   @IsOptional()
   @Type(() => Boolean)

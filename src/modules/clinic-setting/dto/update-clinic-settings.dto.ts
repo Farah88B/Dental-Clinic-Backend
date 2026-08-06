@@ -1,5 +1,6 @@
-import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class UpdateClinicSettingsDto {
   @ApiProperty({ required: false, description: 'Buffer time between appointments (minutes)' })
@@ -36,4 +37,37 @@ export class UpdateClinicSettingsDto {
   })
   @IsOptional() @IsInt() @Min(1)
   maxBookingHorizonDays?: number;
+
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Clinic latitude for QR check-in geofence (WGS84)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number | null;
+
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Clinic longitude for QR check-in geofence (WGS84)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number | null;
+
+  @ApiProperty({
+    required: false,
+    description: 'Allowed distance from clinic pin for app QR check-in (meters)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(10)
+  checkInRadiusMeters?: number;
 }

@@ -11,6 +11,9 @@ export const clinicSettingsSelect = () => {
     autoConfirmationEnabled: true,
     onlineBookingEnabled: true,
     maxBookingHorizonDays: true,
+    latitude: true,
+    longitude: true,
+    checkInRadiusMeters: true,
     updatedAt: true,
   });
 };

@@ -57,6 +57,9 @@ Prisma raw error → `PrismaErrorHandlerService` (domain exceptions) → `Prisma
 | Patient | `/api/v1/patients`, `/api/v1/dashboard/patients` | Create patient (app/dashboard), get form schema |
 | PatientForm | `/api/v1/patient-form-fields` | CRUD + reorder form fields (requires `manage_patient_form_fields`) |
 | ClinicSettings | `/api/v1/clinic-settings` | Get/update singleton settings (update requires `manage_clinic_settings`) |
+| ClinicSchedule | `/api/v1/dashboard/clinic-schedule`, `/api/v1/clinic-schedule` | Working hours, exceptions, calendar |
+| Appointments | `/api/v1/appointments`, `/api/v1/dashboard/appointments` | Availability + create booking |
+| Chatbot | `/api/v1/chatbot` | TRIAGE (visit reason) + EDUCATION (home FAQ) via Gemini |
 | Health | `/api/v1/health` | DB ping check (public) |
 
 ### Key business rules
@@ -64,6 +67,7 @@ Prisma raw error → `PrismaErrorHandlerService` (domain exceptions) → `Prisma
 - Account statuses: `PENDING_ACTIVATION` → (OTP verify) → `ACTIVE`; `INVITED` → (activation) → `ACTIVE`
 - SMS in stub mode by default (logs instead of sending, static OTP: `123456`)
 - `MedicalRecordNumberCounter` generates incremental MRNs (`MRN000001`)
+- Appointments: after clinic day ends, past `PENDING_CONFIRMATION`/`CONFIRMED` without check-in → `NO_SHOW`; linked `BOOKED` session → `PENDING` (EC-2)
 
 ## Setup
 1. Copy `.env.example` to `.env`, configure `DATABASE_URL` (PostgreSQL)

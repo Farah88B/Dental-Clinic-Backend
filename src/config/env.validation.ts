@@ -27,6 +27,12 @@ JWT_REFRESH_SECRET:
     .required(),
 
   CLINIC_TIMEZONE: Joi.string().default('Asia/Damascus'),
+
+  CLINIC_CHECKIN_QR_SECRET: Joi.string().min(16).optional(),
+
+  GEMINI_API_KEY: Joi.string().allow('').optional(),
+
+  GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
 });
 
 // this service will validate the environment variables using the above schema. If any of the required variables are missing or invalid, it will throw an error and prevent the application from starting.

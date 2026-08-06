@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DayOfWeek, Prisma } from '@prisma/client';
+import { AppointmentStatus, DayOfWeek, Prisma } from '@prisma/client';
 import { ERROR_CODES } from 'src/common/constants/error-codes.constants';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { ClinicScheduleAdapter } from '../adapter/clinic-schedule.adapter';
@@ -14,13 +14,21 @@ import { UpdateWorkingHoursDto } from '../dto/update-working-hours.dto';
 import { WorkingHoursDayDto } from '../dto/working-hours-day.dto';
 import {
   addDaysToDateOnly,
+  clinicLocalToUtc,
   dayOfWeekFromDateOnly,
   daysInMonth,
   formatDateOnly,
   getClinicTodayDateOnly,
+  getZonedDateTimeParts,
+  getZonedMinutesOfDay,
   parseDateOnlyString,
   toUtcDateOnly,
 } from '../helpers/clinic-timezone.helper';
+import {
+  AffectedAppointment,
+  collectConflictingAppointments,
+  ConflictWorkingWindow,
+} from '../helpers/schedule-conflict.helper';
 import {
   assertValidWorkingWindow,
   normalizeBreaks,
@@ -51,6 +59,13 @@ const ALL_DAYS: DayOfWeek[] = [
   DayOfWeek.THURSDAY,
   DayOfWeek.FRIDAY,
   DayOfWeek.SATURDAY,
+];
+
+const SCHEDULE_CONFLICT_STATUSES: AppointmentStatus[] = [
+  AppointmentStatus.PENDING_CONFIRMATION,
+  AppointmentStatus.CONFIRMED,
+  AppointmentStatus.CHECKED_IN,
+  AppointmentStatus.IN_TREATMENT,
 ];
 
 @Injectable()
@@ -90,12 +105,21 @@ export class ClinicScheduleService {
       assertValidWorkingWindow(day);
     }
 
-    // TODO(Appointments): BR-50 dry-run against future active appointments.
-    // If conflicts exist and dto.confirmed !== true, throw ConflictException
-    // with ERROR_CODES.SCHEDULE_CHANGE_HAS_CONFLICTS and details.affectedAppointments.
-    // Do NOT auto-cancel/modify appointments when confirmed.
+    // BR-50: dry-run against future active appointments under the proposed week.
     await this.assertNoAppointmentConflictsOrConfirmed({
       confirmed: dto.confirmed === true,
+      kind: 'weekly',
+      proposedByDay: new Map(
+        internalDays.map((day, index) => [
+          dto.days[index].dayOfWeek,
+          {
+            isWorkingDay: day.isWorkingDay,
+            startMinute: day.startMinute,
+            endMinute: day.endMinute,
+            breaks: day.breaks,
+          },
+        ]),
+      ),
     });
 
     await this.prisma.$transaction(async (tx) => {
@@ -152,9 +176,20 @@ export class ClinicScheduleService {
     assertValidWorkingWindow(internal);
     const window = this.toPersistedWindow(internal);
 
-    // TODO(Appointments): BR-50 dry-run for this single date + confirmed flag
     await this.assertNoAppointmentConflictsOrConfirmed({
       confirmed: dto.confirmed === true,
+      kind: 'dates',
+      overrides: [
+        {
+          dateOnly,
+          window: {
+            isWorkingDay: internal.isWorkingDay,
+            startMinute: internal.startMinute,
+            endMinute: internal.endMinute,
+            breaks: internal.breaks,
+          },
+        },
+      ],
     });
 
     const created = await this.prisma.clinicScheduleException.create({
@@ -211,9 +246,33 @@ export class ClinicScheduleService {
     assertValidWorkingWindow(internal);
     const merged = this.toPersistedWindow(internal);
 
-    // TODO(Appointments): BR-50 dry-run for resulting window + confirmed flag
+    const overrides: Array<{
+      dateOnly: Date;
+      window: ConflictWorkingWindow;
+    }> = [
+      {
+        dateOnly: nextDate,
+        window: {
+          isWorkingDay: internal.isWorkingDay,
+          startMinute: internal.startMinute,
+          endMinute: internal.endMinute,
+          breaks: internal.breaks,
+        },
+      },
+    ];
+
+    // Moving the exception date reverts the old date to the weekly pattern.
+    const oldDateKey = existing.date.toISOString().slice(0, 10);
+    const nextDateKey = nextDate.toISOString().slice(0, 10);
+    if (oldDateKey !== nextDateKey) {
+      const weekly = await this.resolveWeeklyWindowOnly(existing.date);
+      overrides.push({ dateOnly: existing.date, window: weekly });
+    }
+
     await this.assertNoAppointmentConflictsOrConfirmed({
       confirmed: dto.confirmed === true,
+      kind: 'dates',
+      overrides,
     });
 
     const updated = await this.prisma.clinicScheduleException.update({
@@ -233,14 +292,18 @@ export class ClinicScheduleService {
   }
 
   async deleteException(id: number, confirmed?: boolean) {
-    await this.prisma.clinicScheduleException.findUniqueOrThrow({
-      where: { id },
-      select: { id: true },
-    });
+    const existing =
+      await this.prisma.clinicScheduleException.findUniqueOrThrow({
+        where: { id },
+        select: { id: true, date: true },
+      });
 
-    // TODO(Appointments): BR-50 — deleting reverts date to weekly pattern.
+    // Deleting reverts the date to the weekly pattern — BR-50 against that window.
+    const weekly = await this.resolveWeeklyWindowOnly(existing.date);
     await this.assertNoAppointmentConflictsOrConfirmed({
       confirmed: confirmed === true,
+      kind: 'dates',
+      overrides: [{ dateOnly: existing.date, window: weekly }],
     });
 
     await this.prisma.clinicScheduleException.delete({
@@ -296,7 +359,7 @@ export class ClinicScheduleService {
   }
 
   /**
-   * Public contract for the future Appointments module.
+   * Resolves the effective working window for a calendar date.
    * Exception for the date wins; otherwise weekly pattern by day-of-week.
    */
   async resolveWorkingWindow(date: Date): Promise<ResolvedWorkingWindow> {
@@ -436,26 +499,196 @@ export class ClinicScheduleService {
   }
 
   /**
-   * TODO(Appointments): Replace stub with real conflict detection.
-   * Query statuses PENDING_CONFIRMATION | CONFIRMED | CHECKED_IN where
-   * scheduledAt >= now; compare appointment interval against proposed windows
-   * (minus breaks). Duration = appointment.durationMinutes ??
-   * ClinicSettings.defaultConsultationDurationMinutes.
+   * Weekly pattern only (ignores date exceptions). Used when an exception
+   * is deleted or moved away from a date.
    */
-  private async assertNoAppointmentConflictsOrConfirmed(input: {
-    confirmed: boolean;
-  }): Promise<void> {
-    const affectedAppointments: Array<{
-      id: number;
-      patientFullName: string;
-      scheduledAt: Date;
-    }> = [];
+  private async resolveWeeklyWindowOnly(
+    date: Date,
+  ): Promise<ConflictWorkingWindow> {
+    const dateOnly = toUtcDateOnly(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + 1,
+      date.getUTCDate(),
+    );
+    const weekly = await this.prisma.clinicWorkingHours.findUnique({
+      where: { dayOfWeek: dayOfWeekFromDateOnly(dateOnly) },
+      select: {
+        isWorkingDay: true,
+        startMinute: true,
+        endMinute: true,
+        breaks: true,
+      },
+    });
 
-    if (affectedAppointments.length > 0 && !input.confirmed) {
+    if (!weekly || !weekly.isWorkingDay) {
+      return {
+        isWorkingDay: false,
+        startMinute: null,
+        endMinute: null,
+        breaks: [],
+      };
+    }
+
+    return {
+      isWorkingDay: true,
+      startMinute: weekly.startMinute,
+      endMinute: weekly.endMinute,
+      breaks: parseBreaksJson(weekly.breaks),
+    };
+  }
+
+  /**
+   * BR-50: if future active appointments would fall outside the proposed
+   * windows, require `confirmed=true`. Does not cancel or modify appointments.
+   */
+  private async assertNoAppointmentConflictsOrConfirmed(
+    input:
+      | {
+          confirmed: boolean;
+          kind: 'weekly';
+          proposedByDay: Map<DayOfWeek, ConflictWorkingWindow>;
+        }
+      | {
+          confirmed: boolean;
+          kind: 'dates';
+          overrides: Array<{
+            dateOnly: Date;
+            window: ConflictWorkingWindow;
+          }>;
+        },
+  ): Promise<void> {
+    const affected =
+      input.kind === 'weekly'
+        ? await this.findConflictsForWeeklyChange(input.proposedByDay)
+        : await this.findConflictsForDateOverrides(input.overrides);
+
+    if (affected.length > 0 && !input.confirmed) {
       throw new ConflictException({
         message: ERROR_CODES.SCHEDULE_CHANGE_HAS_CONFLICTS,
-        details: { affectedAppointments },
+        details: { affectedAppointments: affected },
       });
     }
   }
+
+  private async findConflictsForWeeklyChange(
+    proposedByDay: Map<DayOfWeek, ConflictWorkingWindow>,
+  ): Promise<AffectedAppointment[]> {
+    const now = new Date();
+    const today = getClinicTodayDateOnly(this.timeZone);
+
+    const [appointments, exceptions] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where: {
+          scheduledAt: { gte: now },
+          status: { in: [...SCHEDULE_CONFLICT_STATUSES] },
+        },
+        select: {
+          id: true,
+          scheduledAt: true,
+          durationMinutes: true,
+          patient: { select: { fullName: true } },
+        },
+        orderBy: { scheduledAt: 'asc' },
+      }),
+      this.prisma.clinicScheduleException.findMany({
+        where: { date: { gte: today } },
+        select: { date: true },
+      }),
+    ]);
+
+    const exceptionDates = new Set(
+      exceptions.map((row) => row.date.toISOString().slice(0, 10)),
+    );
+
+    return collectConflictingAppointments({
+      appointments: appointments.map((appt) => ({
+        id: appt.id,
+        scheduledAt: appt.scheduledAt,
+        durationMinutes: appt.durationMinutes,
+        patientFullName: appt.patient.fullName,
+        startMinute: getZonedMinutesOfDay(appt.scheduledAt, this.timeZone),
+      })),
+      resolveWindow: (appt) => {
+        const zoned = getZonedDateTimeParts(appt.scheduledAt, this.timeZone);
+        const dateKey = formatDateOnly(zoned.year, zoned.month, zoned.day);
+        // Existing exceptions still own those dates; weekly edit does not apply.
+        if (exceptionDates.has(dateKey)) {
+          return null;
+        }
+        return (
+          proposedByDay.get(zoned.dayOfWeek) ?? {
+            isWorkingDay: false,
+            startMinute: null,
+            endMinute: null,
+            breaks: [],
+          }
+        );
+      },
+    });
+  }
+
+  private async findConflictsForDateOverrides(
+    overrides: Array<{ dateOnly: Date; window: ConflictWorkingWindow }>,
+  ): Promise<AffectedAppointment[]> {
+    if (overrides.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const windowsByDate = new Map(
+      overrides.map((item) => [
+        item.dateOnly.toISOString().slice(0, 10),
+        item.window,
+      ]),
+    );
+
+    const dayRanges = overrides.map((item) => {
+      const y = item.dateOnly.getUTCFullYear();
+      const m = item.dateOnly.getUTCMonth() + 1;
+      const d = item.dateOnly.getUTCDate();
+      const start = clinicLocalToUtc(y, m, d, 0, this.timeZone);
+      const next = addDaysToDateOnly(item.dateOnly, 1);
+      const end = clinicLocalToUtc(
+        next.getUTCFullYear(),
+        next.getUTCMonth() + 1,
+        next.getUTCDate(),
+        0,
+        this.timeZone,
+      );
+      return { start, end };
+    });
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        status: { in: [...SCHEDULE_CONFLICT_STATUSES] },
+        scheduledAt: { gte: now },
+        OR: dayRanges.map((range) => ({
+          scheduledAt: { gte: range.start, lt: range.end },
+        })),
+      },
+      select: {
+        id: true,
+        scheduledAt: true,
+        durationMinutes: true,
+        patient: { select: { fullName: true } },
+      },
+      orderBy: { scheduledAt: 'asc' },
+    });
+
+    return collectConflictingAppointments({
+      appointments: appointments.map((appt) => ({
+        id: appt.id,
+        scheduledAt: appt.scheduledAt,
+        durationMinutes: appt.durationMinutes,
+        patientFullName: appt.patient.fullName,
+        startMinute: getZonedMinutesOfDay(appt.scheduledAt, this.timeZone),
+      })),
+      resolveWindow: (appt) => {
+        const zoned = getZonedDateTimeParts(appt.scheduledAt, this.timeZone);
+        const dateKey = formatDateOnly(zoned.year, zoned.month, zoned.day);
+        return windowsByDate.get(dateKey) ?? null;
+      },
+    });
+  }
 }
+

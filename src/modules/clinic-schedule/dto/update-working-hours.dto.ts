@@ -15,7 +15,7 @@ export class UpdateWorkingHoursDto {
     required: false,
     default: false,
     description:
-      'Confirm despite appointment conflicts — TODO(Appointments): BR-50',
+      'Set true to apply the change even when future appointments fall outside the new windows. Appointments are not cancelled.',
   })
   @IsOptional()
   @IsBoolean()

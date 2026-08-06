@@ -185,6 +185,11 @@ model ClinicSettings {
   onlineBookingEnabled                Boolean @default(true)
   maxBookingHorizonDays               Int     @default(30)
 
+  /// Clinic map pin for QR check-in geofence (WGS84).
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  checkInRadiusMeters Int @default(150)
+
   updatedByAccountId Int? @unique
   updatedBy          Account? @relation("ClinicSettingsUpdater", fields: [updatedByAccountId], references: [id])
   createdAt DateTime @default(now())

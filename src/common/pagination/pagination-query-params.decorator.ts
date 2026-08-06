@@ -41,13 +41,15 @@ createParamDecorator(
     const request =
       ctx.switchToHttp().getRequest();
 
-    return plainToInstance(
+    const instance = plainToInstance(
       PaginationDto,
       request.query,
       {
         enableImplicitConversion: true,
       },
     );
+
+    return instance;
 
   },
 
