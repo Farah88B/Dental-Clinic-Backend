@@ -10,6 +10,7 @@ import { APPOINTMENT_ERROR_CODES } from 'src/common/constants/appointment.consta
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { ClinicScheduleService } from 'src/modules/clinic-schedule/services/clinic-schedule.service';
 import { AppointmentAdapter } from '../adapter/appointment.adapter';
+import { buildClinicCheckInCode } from '../helpers/clinic-checkin-code.helper';
 import { AppointmentAvailabilityService } from './appointment-availability.service';
 import { AppointmentService } from './appointment.service';
 
@@ -17,7 +18,7 @@ describe('AppointmentService', () => {
   let service: AppointmentService;
 
   const prisma = {
-    patient: { findUniqueOrThrow: jest.fn() },
+    patient: { findUniqueOrThrow: jest.fn(), findUnique: jest.fn() },
     appointment: {
       findFirst: jest.fn(),
       findUniqueOrThrow: jest.fn(),
@@ -46,6 +47,12 @@ describe('AppointmentService', () => {
     adapt: jest.fn((raw) => raw),
   };
 
+  const configGet = jest.fn((key: string) => {
+    if (key === 'clinic.timezone') return 'Asia/Damascus';
+    if (key === 'clinic.checkInQrSecret') return 'test-clinic-checkin-secret';
+    return undefined;
+  });
+
   const farFuture = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const soon = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
@@ -61,7 +68,7 @@ describe('AppointmentService', () => {
         { provide: AppointmentAdapter, useValue: adapter },
         {
           provide: ConfigService,
-          useValue: { get: jest.fn().mockReturnValue('Asia/Damascus') },
+          useValue: { get: configGet },
         },
         { provide: ClinicScheduleService, useValue: {} },
       ],
@@ -375,6 +382,169 @@ describe('AppointmentService', () => {
       );
       await expect(service.cancelFromApp(10, {}, 1)).rejects.toThrow(
         APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CANCELLABLE,
+      );
+    });
+  });
+
+  describe('confirm / reject / check-in', () => {
+    it('confirms pending appointment and books linked session', async () => {
+      prisma.appointment.findUniqueOrThrow.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.PENDING_CONFIRMATION,
+        treatmentSessionId: 55,
+      });
+      prisma.appointment.update.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CONFIRMED,
+      });
+
+      const result = await service.confirmFromDashboard(10, 2);
+
+      expect(result.status).toBe(AppointmentStatus.CONFIRMED);
+      expect(prisma.treatmentSession.update).toHaveBeenCalledWith({
+        where: { id: 55 },
+        data: { status: TreatmentSessionStatus.BOOKED },
+      });
+    });
+
+    it('rejects confirm when status is not pending', async () => {
+      prisma.appointment.findUniqueOrThrow.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CONFIRMED,
+        treatmentSessionId: null,
+      });
+
+      await expect(service.confirmFromDashboard(10, 2)).rejects.toThrow(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CONFIRMABLE,
+      );
+    });
+
+    it('rejects reject when status is not pending', async () => {
+      prisma.appointment.findUniqueOrThrow.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CONFIRMED,
+        treatmentSessionId: null,
+      });
+
+      await expect(
+        service.rejectFromDashboard(10, {}, 2),
+      ).rejects.toThrow(APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_REJECTABLE);
+    });
+
+    it('checks in a confirmed appointment from dashboard', async () => {
+      prisma.appointment.findUniqueOrThrow.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CONFIRMED,
+      });
+      prisma.appointment.update.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CHECKED_IN,
+      });
+
+      const result = await service.checkInFromDashboard(10, 2);
+
+      expect(result.status).toBe(AppointmentStatus.CHECKED_IN);
+      expect(prisma.appointment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: AppointmentStatus.CHECKED_IN,
+            checkedInById: 2,
+          }),
+        }),
+      );
+    });
+
+    it('rejects check-in when not confirmed', async () => {
+      prisma.appointment.findUniqueOrThrow.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.PENDING_CONFIRMATION,
+      });
+
+      await expect(service.checkInFromDashboard(10, 2)).rejects.toThrow(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CHECKABLE,
+      );
+    });
+
+    it('checks in from app QR within geofence', async () => {
+      const code = buildClinicCheckInCode('test-clinic-checkin-secret');
+
+      prisma.patient.findUnique.mockResolvedValue({ id: 7 });
+      prisma.clinicSettings.findFirstOrThrow.mockResolvedValue({
+        latitude: 33.5138,
+        longitude: 36.2765,
+        checkInRadiusMeters: 150,
+      });
+      prisma.appointment.findUniqueOrThrow
+        .mockResolvedValueOnce({
+          id: 10,
+          patientId: 7,
+          status: AppointmentStatus.CONFIRMED,
+        })
+        .mockResolvedValueOnce({
+          id: 10,
+          status: AppointmentStatus.CONFIRMED,
+        });
+      prisma.appointment.update.mockResolvedValue({
+        id: 10,
+        status: AppointmentStatus.CHECKED_IN,
+      });
+
+      const result = await service.checkInFromApp(
+        {
+          patientId: 7,
+          clinicCheckInCode: code,
+          latitude: 33.5138,
+          longitude: 36.2765,
+          appointmentId: 10,
+        },
+        1,
+      );
+
+      expect(result.status).toBe(AppointmentStatus.CHECKED_IN);
+    });
+
+    it('rejects app check-in outside geofence', async () => {
+      const code = buildClinicCheckInCode('test-clinic-checkin-secret');
+
+      prisma.patient.findUnique.mockResolvedValue({ id: 7 });
+      prisma.clinicSettings.findFirstOrThrow.mockResolvedValue({
+        latitude: 33.5138,
+        longitude: 36.2765,
+        checkInRadiusMeters: 150,
+      });
+
+      await expect(
+        service.checkInFromApp(
+          {
+            patientId: 7,
+            clinicCheckInCode: code,
+            latitude: 33.7,
+            longitude: 36.5,
+            appointmentId: 10,
+          },
+          1,
+        ),
+      ).rejects.toThrow(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_OUTSIDE_GEOFENCE,
+      );
+    });
+
+    it('rejects invalid clinic check-in code', async () => {
+      prisma.patient.findUnique.mockResolvedValue({ id: 7 });
+
+      await expect(
+        service.checkInFromApp(
+          {
+            patientId: 7,
+            clinicCheckInCode: 'clinic-checkin.invalid',
+            latitude: 33.5138,
+            longitude: 36.2765,
+            appointmentId: 10,
+          },
+          1,
+        ),
+      ).rejects.toThrow(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_CODE_INVALID,
       );
     });
   });

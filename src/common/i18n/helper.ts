@@ -239,6 +239,38 @@ const MESSAGES: Record<string, Record<Language, string>> = {
     ar: 'لا يمكن إلغاء هذا الموعد في حالته الحالية',
     en: 'This appointment cannot be cancelled in its current status',
   },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CONFIRMABLE]: {
+    ar: 'لا يمكن قبول هذا الموعد في حالته الحالية',
+    en: 'This appointment cannot be confirmed in its current status',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_REJECTABLE]: {
+    ar: 'لا يمكن رفض هذا الموعد في حالته الحالية',
+    en: 'This appointment cannot be rejected in its current status',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CHECKABLE]: {
+    ar: 'لا يمكن تسجيل حضور لهذا الموعد في حالته الحالية',
+    en: 'This appointment cannot be checked in in its current status',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_CODE_INVALID]: {
+    ar: 'رمز تسجيل الحضور غير صالح',
+    en: 'Invalid clinic check-in code',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_OUTSIDE_GEOFENCE]: {
+    ar: 'يجب أن تكون داخل حدود العيادة لتسجيل الحضور',
+    en: 'You must be within the clinic area to check in',
+  },
+  [APPOINTMENT_ERROR_CODES.CLINIC_LOCATION_NOT_CONFIGURED]: {
+    ar: 'موقع العيادة غير مضبوط لتسجيل الحضور عبر QR',
+    en: 'Clinic location is not configured for QR check-in',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_NONE_TODAY]: {
+    ar: 'لا يوجد موعد مؤكد اليوم يمكن تسجيل حضوره',
+    en: 'No confirmed appointment is available to check in today',
+  },
+  [APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_AMBIGUOUS]: {
+    ar: 'يوجد أكثر من موعد مؤكد اليوم. حدّد رقم الموعد',
+    en: 'Multiple confirmed appointments today. Specify appointmentId',
+  },
   [CHATBOT_ERROR_CODES.CHATBOT_UNAVAILABLE]: {
     ar: 'المساعد الذكي غير متاح حالياً. يمكنك إدخال سبب الزيارة يدوياً',
     en: 'The chatbot is currently unavailable. You can enter the visit reason manually',

@@ -10,6 +10,11 @@ export class ClinicSettingsResponseDto {
   @ApiProperty() autoConfirmationEnabled!: boolean;
   @ApiProperty() onlineBookingEnabled!: boolean;
   @ApiProperty() maxBookingHorizonDays!: number;
+  @ApiProperty({ required: false, nullable: true, type: Number })
+  latitude!: number | null;
+  @ApiProperty({ required: false, nullable: true, type: Number })
+  longitude!: number | null;
+  @ApiProperty() checkInRadiusMeters!: number;
   @ApiProperty() updatedAt!: Date;
 
   constructor(partial: Partial<ClinicSettingsResponseDto>) {

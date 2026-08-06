@@ -5,6 +5,7 @@ import { AppointmentAppController } from './controllers/appointment-app.controll
 import { AppointmentDashboardController } from './controllers/appointment-dashboard.controller';
 import { AppointmentSharedController } from './controllers/appointment-shared.controller';
 import { AppointmentAvailabilityService } from './services/appointment-availability.service';
+import { AppointmentQueryService } from './services/appointment-query.service';
 import { AppointmentService } from './services/appointment.service';
 
 @Module({
@@ -16,9 +17,14 @@ import { AppointmentService } from './services/appointment.service';
   ],
   providers: [
     AppointmentService,
+    AppointmentQueryService,
     AppointmentAvailabilityService,
     AppointmentAdapter,
   ],
-  exports: [AppointmentService, AppointmentAvailabilityService],
+  exports: [
+    AppointmentService,
+    AppointmentQueryService,
+    AppointmentAvailabilityService,
+  ],
 })
 export class AppointmentsModule {}

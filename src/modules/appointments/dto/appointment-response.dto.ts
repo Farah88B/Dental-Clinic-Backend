@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AppointmentStatus, AppointmentType } from '@prisma/client';
+import { AppointmentPatientSummaryDto } from './appointment-list.dto';
 
 export class AppointmentResponseDto {
   @ApiProperty()
@@ -22,6 +23,9 @@ export class AppointmentResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   rescheduledById!: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  checkedInById!: number | null;
 
   @ApiProperty({ enum: AppointmentType })
   type!: AppointmentType;
@@ -58,6 +62,15 @@ export class AppointmentResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   rescheduledAt!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  checkedInAt!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  completedAt!: Date | null;
+
+  @ApiProperty({ required: false, type: () => AppointmentPatientSummaryDto })
+  patient?: AppointmentPatientSummaryDto;
 
   @ApiProperty()
   createdAt!: Date;

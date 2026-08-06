@@ -6,10 +6,14 @@ export async function upsertClinicSettings(prisma: PrismaService) {
     where: {
       id: 1,
     },
-    update: {},
     create: {
       id: 1,
       ...clinicSettingsData,
+    },
+    update: {
+      latitude: clinicSettingsData.latitude,
+      longitude: clinicSettingsData.longitude,
+      checkInRadiusMeters: clinicSettingsData.checkInRadiusMeters,
     },
   });
 }

@@ -9,6 +9,7 @@ export function appointmentSelect() {
     confirmedById: true,
     cancelledById: true,
     rescheduledById: true,
+    checkedInById: true,
     type: true,
     scheduledAt: true,
     durationMinutes: true,
@@ -21,6 +22,8 @@ export function appointmentSelect() {
     cancellationReason: true,
     cancelledAt: true,
     rescheduledAt: true,
+    checkedInAt: true,
+    completedAt: true,
     createdAt: true,
     updatedAt: true,
   } satisfies Prisma.AppointmentSelect;
@@ -29,3 +32,26 @@ export function appointmentSelect() {
 export type RawAppointment = Prisma.AppointmentGetPayload<{
   select: ReturnType<typeof appointmentSelect>;
 }>;
+
+const appointmentPatientSelect = {
+  id: true,
+  fullName: true,
+  medicalRecordNumber: true,
+} satisfies Prisma.PatientSelect;
+
+export function appointmentListSelect() {
+  return {
+    ...appointmentSelect(),
+    patient: { select: appointmentPatientSelect },
+  } satisfies Prisma.AppointmentSelect;
+}
+
+export type RawAppointmentListItem = Prisma.AppointmentGetPayload<{
+  select: ReturnType<typeof appointmentListSelect>;
+}>;
+
+export function appointmentDetailSelect() {
+  return appointmentListSelect();
+}
+
+export type RawAppointmentDetail = RawAppointmentListItem;

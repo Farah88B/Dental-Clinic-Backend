@@ -25,12 +25,18 @@ import {
 } from 'src/modules/treatment-sessions/helpers/session-flags.helper';
 import { AppointmentAdapter } from '../adapter/appointment.adapter';
 import { AppointmentResponseDto } from '../dto/appointment-response.dto';
+import { ClinicCheckInCodeResponseDto } from '../dto/app-check-in.dto';
 import { CancelAppointmentDto } from '../dto/cancel-appointment.dto';
 import { CreateAppAppointmentDto } from '../dto/create-app-appointment.dto';
 import { CreateDashboardAppointmentDto } from '../dto/create-dashboard-appointment.dto';
 import { RescheduleAppointmentDto } from '../dto/reschedule-appointment.dto';
 import { resolveAppointmentDurationMinutes } from '../helpers/appointment-duration.helper';
 import { resolveInitialAppointmentStatus } from '../helpers/appointment-status.helper';
+import {
+  buildClinicCheckInCode,
+  isValidClinicCheckInCode,
+} from '../helpers/clinic-checkin-code.helper';
+import { isWithinRadiusMeters } from '../helpers/geo.helper';
 import { appointmentSelect } from '../selectors/appointment.select';
 import {
   AppointmentAvailabilityService,
@@ -146,6 +152,234 @@ export class AppointmentService {
       { source: 'DASHBOARD' },
       accountId,
     );
+  }
+
+  async confirmFromDashboard(
+    id: number,
+    accountId: number,
+  ): Promise<AppointmentResponseDto> {
+    const appointment = await this.prisma.appointment.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        treatmentSessionId: true,
+      },
+    });
+
+    if (appointment.status !== AppointmentStatus.PENDING_CONFIRMATION) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CONFIRMABLE,
+      );
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const confirmed = await tx.appointment.update({
+        where: { id: appointment.id },
+        data: {
+          status: AppointmentStatus.CONFIRMED,
+          confirmedAt: new Date(),
+          confirmedById: accountId,
+        },
+        select: appointmentSelect(),
+      });
+
+      if (appointment.treatmentSessionId != null) {
+        await tx.treatmentSession.update({
+          where: { id: appointment.treatmentSessionId },
+          data: { status: TreatmentSessionStatus.BOOKED },
+        });
+      }
+
+      return confirmed;
+    });
+
+    return this.adapter.adapt(updated);
+  }
+
+  async rejectFromDashboard(
+    id: number,
+    dto: CancelAppointmentDto,
+    accountId: number,
+  ): Promise<AppointmentResponseDto> {
+    const appointment = await this.prisma.appointment.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        treatmentSessionId: true,
+      },
+    });
+
+    if (appointment.status !== AppointmentStatus.PENDING_CONFIRMATION) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_REJECTABLE,
+      );
+    }
+
+    return this.cancel(
+      id,
+      dto.cancellationReason ?? null,
+      { source: 'DASHBOARD' },
+      accountId,
+    );
+  }
+
+  checkInFromDashboard(
+    id: number,
+    accountId: number,
+  ): Promise<AppointmentResponseDto> {
+    return this.checkIn(id, accountId);
+  }
+
+  async checkInFromApp(
+    dto: {
+      patientId: number;
+      clinicCheckInCode: string;
+      latitude: number;
+      longitude: number;
+      appointmentId?: number;
+    },
+    accountId: number,
+  ): Promise<AppointmentResponseDto> {
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: dto.patientId, accountId },
+      select: { id: true },
+    });
+    if (!patient) {
+      throw new ForbiddenException();
+    }
+
+    const secret =
+      this.configService.get<string>('clinic.checkInQrSecret') ?? '';
+    if (!isValidClinicCheckInCode(dto.clinicCheckInCode, secret)) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_CODE_INVALID,
+      );
+    }
+
+    const settings = await this.prisma.clinicSettings.findFirstOrThrow({
+      select: {
+        latitude: true,
+        longitude: true,
+        checkInRadiusMeters: true,
+      },
+    });
+
+    if (settings.latitude == null || settings.longitude == null) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.CLINIC_LOCATION_NOT_CONFIGURED,
+      );
+    }
+
+    if (
+      !isWithinRadiusMeters({
+        clinicLat: Number(settings.latitude),
+        clinicLng: Number(settings.longitude),
+        deviceLat: dto.latitude,
+        deviceLng: dto.longitude,
+        radiusMeters: settings.checkInRadiusMeters,
+      })
+    ) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_OUTSIDE_GEOFENCE,
+      );
+    }
+
+    const appointmentId =
+      dto.appointmentId ??
+      (await this.resolveTodaysConfirmedAppointmentId(dto.patientId));
+
+    const appointment = await this.prisma.appointment.findUniqueOrThrow({
+      where: { id: appointmentId },
+      select: { id: true, patientId: true, status: true },
+    });
+
+    if (appointment.patientId !== dto.patientId) {
+      throw new ForbiddenException();
+    }
+
+    return this.checkIn(appointment.id, accountId);
+  }
+
+  getClinicCheckInCode(): ClinicCheckInCodeResponseDto {
+    const secret =
+      this.configService.get<string>('clinic.checkInQrSecret') ?? '';
+    return new ClinicCheckInCodeResponseDto({
+      code: buildClinicCheckInCode(secret),
+    });
+  }
+
+  private async checkIn(
+    id: number,
+    actorAccountId: number,
+  ): Promise<AppointmentResponseDto> {
+    const appointment = await this.prisma.appointment.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (appointment.status !== AppointmentStatus.CONFIRMED) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_NOT_CHECKABLE,
+      );
+    }
+
+    const updated = await this.prisma.appointment.update({
+      where: { id: appointment.id },
+      data: {
+        status: AppointmentStatus.CHECKED_IN,
+        checkedInAt: new Date(),
+        checkedInById: actorAccountId,
+      },
+      select: appointmentSelect(),
+    });
+
+    return this.adapter.adapt(updated);
+  }
+
+  private async resolveTodaysConfirmedAppointmentId(
+    patientId: number,
+  ): Promise<number> {
+    const today = getClinicTodayDateOnly(this.timeZone);
+    const nextDay = addDaysToDateOnly(today, 1);
+    const dayStart = clinicLocalToUtc(
+      today.getUTCFullYear(),
+      today.getUTCMonth() + 1,
+      today.getUTCDate(),
+      0,
+      this.timeZone,
+    );
+    const dayEnd = clinicLocalToUtc(
+      nextDay.getUTCFullYear(),
+      nextDay.getUTCMonth() + 1,
+      nextDay.getUTCDate(),
+      0,
+      this.timeZone,
+    );
+
+    const candidates = await this.prisma.appointment.findMany({
+      where: {
+        patientId,
+        status: AppointmentStatus.CONFIRMED,
+        scheduledAt: { gte: dayStart, lt: dayEnd },
+      },
+      select: { id: true },
+      orderBy: { scheduledAt: 'asc' },
+    });
+
+    if (candidates.length === 0) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_NONE_TODAY,
+      );
+    }
+    if (candidates.length > 1) {
+      throw new BadRequestException(
+        APPOINTMENT_ERROR_CODES.APPOINTMENT_CHECKIN_AMBIGUOUS,
+      );
+    }
+
+    return candidates[0].id;
   }
 
   private async reschedule(

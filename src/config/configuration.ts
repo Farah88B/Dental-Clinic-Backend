@@ -29,6 +29,10 @@ export default () => ({
 
   clinic: {
     timezone: process.env.CLINIC_TIMEZONE ?? 'Asia/Damascus',
+    checkInQrSecret:
+      process.env.CLINIC_CHECKIN_QR_SECRET ??
+      process.env.JWT_SECRET ??
+      'dev-clinic-checkin-secret',
   },
 
   gemini: {
