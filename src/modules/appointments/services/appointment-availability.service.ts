@@ -84,6 +84,7 @@ export class AppointmentAvailabilityService {
       treatmentSessionId?: number;
       month: number;
       year: number;
+      excludeAppointmentId?: number;
     },
     access: AppointmentBookingAccess,
   ): Promise<AvailableDayResponseDto[]> {
@@ -91,8 +92,20 @@ export class AppointmentAvailabilityService {
     const settings = await this.loadSettings();
     this.assertOnlineBookingIfApp(access, settings);
 
+    if (query.excludeAppointmentId != null) {
+      await this.assertExcludeAppointmentAccess(
+        query.excludeAppointmentId,
+        query.patientId,
+        query.type,
+        query.treatmentSessionId,
+      );
+    }
+
     if (query.type === AppointmentType.CONSULTATION) {
-      await this.assertNoActiveConsultation(query.patientId);
+      await this.assertNoActiveConsultation(
+        query.patientId,
+        query.excludeAppointmentId,
+      );
     }
 
     const session =
@@ -100,6 +113,7 @@ export class AppointmentAvailabilityService {
         ? await this.loadBookableSession(
             query.patientId,
             query.treatmentSessionId,
+            query.excludeAppointmentId,
           )
         : null;
 
@@ -142,6 +156,7 @@ export class AppointmentAvailabilityService {
         durationMinutes,
         bufferTimeMinutes: settings.bufferTimeMinutes,
         today,
+        excludeAppointmentId: query.excludeAppointmentId,
       });
 
       if (slots.length === 0) {
@@ -166,6 +181,7 @@ export class AppointmentAvailabilityService {
       type: AppointmentType;
       treatmentSessionId?: number;
       date: string;
+      excludeAppointmentId?: number;
     },
     access: AppointmentBookingAccess,
   ): Promise<AvailableSlotResponseDto[]> {
@@ -173,8 +189,20 @@ export class AppointmentAvailabilityService {
     const settings = await this.loadSettings();
     this.assertOnlineBookingIfApp(access, settings);
 
+    if (query.excludeAppointmentId != null) {
+      await this.assertExcludeAppointmentAccess(
+        query.excludeAppointmentId,
+        query.patientId,
+        query.type,
+        query.treatmentSessionId,
+      );
+    }
+
     if (query.type === AppointmentType.CONSULTATION) {
-      await this.assertNoActiveConsultation(query.patientId);
+      await this.assertNoActiveConsultation(
+        query.patientId,
+        query.excludeAppointmentId,
+      );
     }
 
     const session =
@@ -182,6 +210,7 @@ export class AppointmentAvailabilityService {
         ? await this.loadBookableSession(
             query.patientId,
             query.treatmentSessionId,
+            query.excludeAppointmentId,
           )
         : null;
 
@@ -220,6 +249,7 @@ export class AppointmentAvailabilityService {
       durationMinutes,
       bufferTimeMinutes: settings.bufferTimeMinutes,
       today,
+      excludeAppointmentId: query.excludeAppointmentId,
     });
 
     return starts.map(
@@ -303,12 +333,48 @@ export class AppointmentAvailabilityService {
     }
   }
 
-  private async assertNoActiveConsultation(patientId: number): Promise<void> {
+  private async assertExcludeAppointmentAccess(
+    excludeAppointmentId: number,
+    patientId: number,
+    type: AppointmentType,
+    treatmentSessionId?: number,
+  ): Promise<void> {
+    const appointment = await this.prisma.appointment.findUniqueOrThrow({
+      where: { id: excludeAppointmentId },
+      select: {
+        patientId: true,
+        type: true,
+        treatmentSessionId: true,
+      },
+    });
+
+    if (appointment.patientId !== patientId) {
+      throw new ForbiddenException();
+    }
+    if (appointment.type !== type) {
+      throw new ForbiddenException();
+    }
+    if (
+      type === AppointmentType.FOLLOW_UP &&
+      treatmentSessionId != null &&
+      appointment.treatmentSessionId !== treatmentSessionId
+    ) {
+      throw new ForbiddenException();
+    }
+  }
+
+  private async assertNoActiveConsultation(
+    patientId: number,
+    excludeAppointmentId?: number,
+  ): Promise<void> {
     const open = await this.prisma.appointment.findFirst({
       where: {
         patientId,
         type: AppointmentType.CONSULTATION,
         status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
+        ...(excludeAppointmentId != null
+          ? { id: { not: excludeAppointmentId } }
+          : {}),
       },
       select: { id: true },
     });
@@ -322,6 +388,7 @@ export class AppointmentAvailabilityService {
   async loadBookableSession(
     patientId: number,
     treatmentSessionId?: number,
+    excludeAppointmentId?: number,
   ): Promise<SessionBookingContext> {
     if (treatmentSessionId == null) {
       throw new BadRequestException(
@@ -352,6 +419,9 @@ export class AppointmentAvailabilityService {
         appointments: {
           where: {
             status: { in: [...ACTIVE_APPOINTMENT_STATUSES] },
+            ...(excludeAppointmentId != null
+              ? { id: { not: excludeAppointmentId } }
+              : {}),
           },
           select: { id: true },
           take: 1,
@@ -378,13 +448,17 @@ export class AppointmentAvailabilityService {
       }));
 
     const hasActiveAppointment = session.appointments.length > 0;
-    if (
-      !computeCanBook(
-        { id: session.id, status: session.status },
-        planSessions,
-        hasActiveAppointment,
-      )
-    ) {
+    const canBookNew = computeCanBook(
+      { id: session.id, status: session.status },
+      planSessions,
+      hasActiveAppointment,
+    );
+    const canRescheduleBooked =
+      excludeAppointmentId != null &&
+      !hasActiveAppointment &&
+      session.status === TreatmentSessionStatus.BOOKED;
+
+    if (!canBookNew && !canRescheduleBooked) {
       throw new BadRequestException(
         APPOINTMENT_ERROR_CODES.APPOINTMENT_SESSION_NOT_BOOKABLE,
       );

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppointmentType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
@@ -39,6 +39,15 @@ export class AvailableDaysQueryDto {
   @IsInt()
   @Min(2000)
   year!: number;
+
+  @ApiPropertyOptional({
+    description:
+      'When rescheduling, pass the appointment id being moved so it is ignored by active-booking checks and busy-slot math',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  excludeAppointmentId?: number;
 }
 
 export class AvailableSlotsQueryDto {
@@ -62,4 +71,13 @@ export class AvailableSlotsQueryDto {
   @ApiProperty({ example: '2026-08-20' })
   @IsDateString()
   date!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When rescheduling, pass the appointment id being moved so it is ignored by active-booking checks and busy-slot math',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  excludeAppointmentId?: number;
 }
