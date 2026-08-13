@@ -2,6 +2,7 @@ import { APPOINTMENT_ERROR_CODES } from "../constants/appointment.constants";
 import { AUTH_ERROR_CODES } from "../constants/auth.constants";
 import { CHATBOT_ERROR_CODES } from "../constants/chatbot.constants";
 import { ERROR_CODES } from "../constants/error-codes.constants";
+import { FINANCIAL_ERROR_CODES } from "../constants/financial.constants";
 import { OTP_ERROR_CODES } from "../constants/otp.constants";
 import { TREATMENT_ERROR_CODES } from "../constants/treatment.constants";
 export type Language = 'ar' | 'en';
@@ -350,6 +351,42 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [TREATMENT_ERROR_CODES.INVALID_ATTACHMENT_FILE_COUNT]: {
     ar: 'عدد الملفات غير صحيح لهذا النوع من المرفقات (صورة: ملفان بالضبط، أشعة/تقرير: ملف واحد على الأقل)',
     en: 'Wrong file count for this attachment type (PHOTO: exactly 2 files; XRAY/REPORT: at least 1)',
+  },
+  [FINANCIAL_ERROR_CODES.INVALID_INVOICE_ITEMS]: {
+    ar: 'يجب أن تحتوي الفاتورة على بند واحد على الأقل',
+    en: 'Invoice must include at least one item',
+  },
+  [FINANCIAL_ERROR_CODES.INVALID_INVOICE_ITEM_QUANTITY]: {
+    ar: 'كمية بند الفاتورة يجب أن تكون أكبر من صفر',
+    en: 'Invoice item quantity must be greater than zero',
+  },
+  [FINANCIAL_ERROR_CODES.INVALID_INVOICE_ITEM_UNIT_PRICE]: {
+    ar: 'سعر بند الفاتورة لا يمكن أن يكون سالباً',
+    en: 'Invoice item unit price cannot be negative',
+  },
+  [FINANCIAL_ERROR_CODES.INVALID_INVOICE_RELATION]: {
+    ar: 'الخطة أو الجلسة العلاجية غير مرتبطة بهذا المريض',
+    en: 'Treatment plan or session does not belong to this patient',
+  },
+  [FINANCIAL_ERROR_CODES.PATIENT_ARCHIVED_CANNOT_INVOICE]: {
+    ar: 'لا يمكن إنشاء فاتورة لمريض مؤرشف',
+    en: 'Cannot create an invoice for an archived patient',
+  },
+  [FINANCIAL_ERROR_CODES.INVALID_PAYMENT_AMOUNT]: {
+    ar: 'مبلغ الدفعة يجب أن يكون أكبر من صفر',
+    en: 'Payment amount must be greater than zero',
+  },
+  [FINANCIAL_ERROR_CODES.PAYMENT_EXCEEDS_REMAINING]: {
+    ar: 'مبلغ الدفعة أكبر من المبلغ المتبقي على الفاتورة',
+    en: 'Payment amount exceeds the remaining invoice balance',
+  },
+  [FINANCIAL_ERROR_CODES.INVOICE_ALREADY_PAID]: {
+    ar: 'الفاتورة مدفوعة بالكامل ولا يمكن تسجيل دفعة إضافية',
+    en: 'Invoice is already fully paid',
+  },
+  [FINANCIAL_ERROR_CODES.INVOICE_VOID]: {
+    ar: 'لا يمكن تسجيل دفعة على فاتورة ملغاة',
+    en: 'Cannot record a payment on a void invoice',
   },
 };
 

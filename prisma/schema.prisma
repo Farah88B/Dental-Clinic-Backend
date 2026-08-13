@@ -124,6 +124,9 @@ model Account {
   rescheduledAppointments Appointment[] @relation("AppointmentRescheduler")
   checkedInAppointments   Appointment[] @relation("AppointmentChecker")
 
+  createdInvoices  Invoice[] @relation("InvoiceCreator")
+  receivedPayments Payment[] @relation("PaymentReceiver")
+
 }
 
 model AccountRole {
@@ -293,6 +296,7 @@ model Patient {
 
   treatmentPlans TreatmentPlan[]
   appointments   Appointment[]
+  invoices       Invoice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -508,6 +512,7 @@ model TreatmentPlan {
   isActive Boolean @default(true)
 
   sessions TreatmentSession[]
+  invoices Invoice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -717,4 +722,95 @@ model ContentMediaFile {
 
   @@unique([contentId, mediaFileId])
   @@index([contentId, displayOrder])
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+}
+
+model InvoiceNumberCounter {
+  id        Int @id
+  lastValue Int @default(0)
+}
+
+model Invoice {
+  id Int @id @default(autoincrement())
+
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  treatmentPlanId Int?
+  treatmentPlan   TreatmentPlan? @relation(fields: [treatmentPlanId], references: [id])
+
+  createdByAccountId Int?
+  createdByAccount   Account? @relation("InvoiceCreator", fields: [createdByAccountId], references: [id])
+
+  invoiceNumber String @unique
+
+  status InvoiceStatus @default(UNPAID)
+
+  totalAmount Decimal @default(0) @db.Decimal(10, 2)
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  issuedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([treatmentPlanId])
+  @@index([status])
+  @@index([issuedAt])
+}
+
+model InvoiceItem {
+  id Int @id @default(autoincrement())
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  descriptionAr String?
+  descriptionEn String?
+
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  amount Decimal @db.Decimal(10, 2)
+
+  method PaymentMethod @default(CASH)
+
+  receivedByAccountId Int
+  receivedByAccount   Account @relation("PaymentReceiver", fields: [receivedByAccountId], references: [id])
+
+  paidAt DateTime @default(now())
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([receivedByAccountId])
+  @@index([paidAt])
 }
