@@ -36,6 +36,7 @@ import { TreatmentSchedulerModule } from './modules/treatment-scheduler/treatmen
 import { ContentModule } from './modules/content/content.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { FinancialModule } from './modules/financial/financial.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
       ContentModule,
       AppointmentsModule,
       ChatbotModule,
+      FinancialModule,
   ],
   controllers: [AppController],
 providers: [

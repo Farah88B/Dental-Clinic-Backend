@@ -18,6 +18,7 @@ import { upsertClinicSettings } from "./clinic-settings/clinic-settings.seed";
 import { upsertDefaultPatientFormFields } from "./patient-form-fields/patient-form-field.seed";
 import { upsertDefaultTreatmentTemplates } from "./treatment-templates/treatment-templates.seed";
 import { upsertDemoPatientJourney } from "./demo-patient-journey/demo-patient.seed";
+import { upsertDemoFinancials } from "./financial/financial.seed";
 import { upsertDemoContent } from "./content/content.seed";
 
 import { upsertClinicWorkingHours } from "./clinic-schedule/clinic-working-hours.seed";
@@ -44,6 +45,8 @@ async function main(){
  await upsertDefaultTreatmentTemplates(prisma);
 
  await upsertDemoPatientJourney(prisma);
+
+ await upsertDemoFinancials(prisma);
 
  await upsertDemoContent(prisma);
 
