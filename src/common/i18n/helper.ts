@@ -3,6 +3,7 @@ import { AUTH_ERROR_CODES } from "../constants/auth.constants";
 import { CHATBOT_ERROR_CODES } from "../constants/chatbot.constants";
 import { ERROR_CODES } from "../constants/error-codes.constants";
 import { FINANCIAL_ERROR_CODES } from "../constants/financial.constants";
+import { NOTIFICATION_ERROR_CODES } from "../constants/notification.constants";
 import { OTP_ERROR_CODES } from "../constants/otp.constants";
 import { TREATMENT_ERROR_CODES } from "../constants/treatment.constants";
 export type Language = 'ar' | 'en';
@@ -387,6 +388,14 @@ const MESSAGES: Record<string, Record<Language, string>> = {
   [FINANCIAL_ERROR_CODES.INVOICE_VOID]: {
     ar: 'لا يمكن تسجيل دفعة على فاتورة ملغاة',
     en: 'Cannot record a payment on a void invoice',
+  },
+  [NOTIFICATION_ERROR_CODES.INVALID_DEVICE_TOKEN]: {
+    ar: 'رمز الجهاز غير صالح',
+    en: 'Device token is invalid',
+  },
+  [NOTIFICATION_ERROR_CODES.DEVICE_TOKEN_FORBIDDEN]: {
+    ar: 'لا يمكنك إلغاء رمز جهاز لا يخص حسابك',
+    en: 'You cannot revoke another account\'s device token',
   },
 };
 

@@ -12,7 +12,9 @@ import { ClinicScheduleService } from 'src/modules/clinic-schedule/services/clin
 import { AppointmentAdapter } from '../adapter/appointment.adapter';
 import { buildClinicCheckInCode } from '../helpers/clinic-checkin-code.helper';
 import { AppointmentAvailabilityService } from './appointment-availability.service';
+import { AppointmentNotificationService } from './appointment-notification.service';
 import { AppointmentService } from './appointment.service';
+import { NotificationRecipientService } from 'src/modules/notification/services/notification-recipient.service';
 
 describe('AppointmentService', () => {
   let service: AppointmentService;
@@ -56,6 +58,18 @@ describe('AppointmentService', () => {
   const farFuture = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const soon = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
+  const notificationRecipients = {
+    dispatchSafely: jest.fn(),
+  };
+
+  const appointmentNotifications = {
+    onCreated: jest.fn().mockResolvedValue(undefined),
+    onConfirmed: jest.fn().mockResolvedValue(undefined),
+    onCancelled: jest.fn().mockResolvedValue(undefined),
+    onRescheduled: jest.fn().mockResolvedValue(undefined),
+    onCheckedInFromApp: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation(async (cb) => cb(prisma));
@@ -71,6 +85,14 @@ describe('AppointmentService', () => {
           useValue: { get: configGet },
         },
         { provide: ClinicScheduleService, useValue: {} },
+        {
+          provide: AppointmentNotificationService,
+          useValue: appointmentNotifications,
+        },
+        {
+          provide: NotificationRecipientService,
+          useValue: notificationRecipients,
+        },
       ],
     }).compile();
 

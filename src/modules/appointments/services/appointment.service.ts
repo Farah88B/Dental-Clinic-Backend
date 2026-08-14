@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { APPOINTMENT_ERROR_CODES } from 'src/common/constants/appointment.constants';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
+import { NotificationRecipientService } from 'src/modules/notification/services/notification-recipient.service';
 import {
   addDaysToDateOnly,
   clinicLocalToUtc,
@@ -42,6 +43,7 @@ import {
   AppointmentAvailabilityService,
   AppointmentBookingAccess,
 } from './appointment-availability.service';
+import { AppointmentNotificationService } from './appointment-notification.service';
 
 const MUTABLE_STATUSES: AppointmentStatus[] = [
   AppointmentStatus.PENDING_CONFIRMATION,
@@ -57,6 +59,8 @@ export class AppointmentService {
     private readonly availabilityService: AppointmentAvailabilityService,
     private readonly adapter: AppointmentAdapter,
     private readonly configService: ConfigService,
+    private readonly appointmentNotifications: AppointmentNotificationService,
+    private readonly notificationRecipients: NotificationRecipientService,
   ) {
     this.timeZone =
       this.configService.get<string>('clinic.timezone') ?? 'Asia/Damascus';
@@ -194,6 +198,11 @@ export class AppointmentService {
       return confirmed;
     });
 
+    this.notificationRecipients.dispatchSafely(
+      this.appointmentNotifications.onConfirmed(updated),
+      `appointment.confirm:${updated.id}`,
+    );
+
     return this.adapter.adapt(updated);
   }
 
@@ -299,7 +308,12 @@ export class AppointmentService {
       throw new ForbiddenException();
     }
 
-    return this.checkIn(appointment.id, accountId);
+    const updated = await this.checkIn(appointment.id, accountId);
+    this.notificationRecipients.dispatchSafely(
+      this.appointmentNotifications.onCheckedInFromApp(appointment.id),
+      `appointment.checkIn:${appointment.id}`,
+    );
+    return updated;
   }
 
   getClinicCheckInCode(): ClinicCheckInCodeResponseDto {
@@ -457,6 +471,11 @@ export class AppointmentService {
       select: appointmentSelect(),
     });
 
+    this.notificationRecipients.dispatchSafely(
+      this.appointmentNotifications.onRescheduled(updated, access),
+      `appointment.reschedule:${updated.id}`,
+    );
+
     return this.adapter.adapt(updated);
   }
 
@@ -507,6 +526,11 @@ export class AppointmentService {
 
       return cancelled;
     });
+
+    this.notificationRecipients.dispatchSafely(
+      this.appointmentNotifications.onCancelled(updated, access),
+      `appointment.cancel:${updated.id}`,
+    );
 
     return this.adapter.adapt(updated);
   }
@@ -738,6 +762,11 @@ export class AppointmentService {
 
       return appointment;
     });
+
+    this.notificationRecipients.dispatchSafely(
+      this.appointmentNotifications.onCreated(created, access),
+      `appointment.create:${created.id}`,
+    );
 
     return this.adapter.adapt(created);
   }

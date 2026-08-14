@@ -34,6 +34,12 @@ JWT_REFRESH_SECRET:
 
   GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
 
+  FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),
+
+  FIREBASE_CLIENT_EMAIL: Joi.string().allow('').optional(),
+
+  FIREBASE_PRIVATE_KEY: Joi.string().allow('').optional(),
+
   SMS_MODE: Joi.string().valid('stub', 'live').default('stub'),
 
   SMS_STATIC_OTP_CODE: Joi.string().length(6).optional(),

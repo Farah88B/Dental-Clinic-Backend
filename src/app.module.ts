@@ -37,6 +37,7 @@ import { ContentModule } from './modules/content/content.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { FinancialModule } from './modules/financial/financial.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { FinancialModule } from './modules/financial/financial.module';
       AppointmentsModule,
       ChatbotModule,
       FinancialModule,
+      NotificationModule,
   ],
   controllers: [AppController],
 providers: [
