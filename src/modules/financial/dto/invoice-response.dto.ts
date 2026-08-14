@@ -91,6 +91,9 @@ export class InvoiceListItemDto {
   @ApiPropertyOptional({ nullable: true })
   treatmentPlanId!: number | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  treatmentPlanName!: string | null;
+
   @ApiProperty({ enum: InvoiceStatus })
   status!: InvoiceStatus;
 
@@ -129,6 +132,9 @@ export class InvoiceDetailResponseDto {
 
   @ApiPropertyOptional({ nullable: true })
   treatmentPlanId!: number | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  treatmentPlanName!: string | null;
 
   @ApiPropertyOptional({ nullable: true })
   createdByAccountId!: number | null;

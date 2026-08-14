@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InvoiceStatus, Prisma } from '@prisma/client';
+import type { Language } from 'src/common/i18n/helper';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { FinancialStatementAdapter } from '../adapter/financial-statement.adapter';
 import { FinancialSummaryQueryDto } from '../dto/invoice-list-query.dto';
@@ -65,6 +66,7 @@ export class FinancialStatementService {
   async getAppFinancialSummary(
     accountId: number,
     query: FinancialSummaryQueryDto,
+    language: Language = 'ar',
   ): Promise<FinancialSummaryResponseDto> {
     if (query.patientId != null) {
       await this.assertOwnedPatient(query.patientId, accountId);
@@ -105,6 +107,7 @@ export class FinancialStatementService {
     return this.statementAdapter.adaptSummary({
       scope: query.patientId != null ? 'PATIENT' : 'FAMILY',
       patients: buckets,
+      language,
     });
   }
 

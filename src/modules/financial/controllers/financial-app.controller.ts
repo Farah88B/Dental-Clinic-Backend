@@ -60,9 +60,13 @@ export class FinancialAppController {
   @ApiBaseResponse(InvoiceListResponseDto)
   listInvoices(
     @Query() query: AppInvoiceListQueryDto,
-    @ReqUser('id') accountId: number,
+    @ReqUser() user: AuthenticatedAccount,
   ) {
-    return this.invoiceService.listForAccount(accountId, query);
+    return this.invoiceService.listForAccount(
+      user.id,
+      query,
+      user.preferredLanguage === 'en' ? 'en' : 'ar',
+    );
   }
 
   @Get('invoices/:id')
@@ -123,8 +127,12 @@ export class FinancialAppController {
   @ApiBaseResponse(FinancialSummaryResponseDto)
   financialSummary(
     @Query() query: FinancialSummaryQueryDto,
-    @ReqUser('id') accountId: number,
+    @ReqUser() user: AuthenticatedAccount,
   ) {
-    return this.statementService.getAppFinancialSummary(accountId, query);
+    return this.statementService.getAppFinancialSummary(
+      user.id,
+      query,
+      user.preferredLanguage === 'en' ? 'en' : 'ar',
+    );
   }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildPublicMediaUrl } from 'src/common/media/helpers/media-path.helper';
 import type { Language } from 'src/common/i18n/helper';
+import { pickLocalized } from 'src/common/i18n/localize.helper';
 import {
   InvoiceDetailResponseDto,
   InvoiceItemResponseDto,
@@ -22,6 +23,29 @@ import {
 
 @Injectable()
 export class InvoiceAdapter {
+  private adaptTreatmentPlanName(
+    treatmentPlan: RawInvoiceListItem['treatmentPlan'],
+    language: Language,
+  ): string | null {
+    if (!treatmentPlan) {
+      return null;
+    }
+
+    if (treatmentPlan.template) {
+      return pickLocalized(
+        treatmentPlan.template.nameAr,
+        treatmentPlan.template.nameEn,
+        language,
+      );
+    }
+
+    const nameAr = treatmentPlan.nameAr ?? '';
+    const nameEn = treatmentPlan.nameEn ?? '';
+    const localized = pickLocalized(nameAr, nameEn, language).trim();
+
+    return localized || null;
+  }
+
   adaptPatientSummary(raw: RawInvoiceListItem['patient']): InvoicePatientSummaryDto {
     return new InvoicePatientSummaryDto({
       id: raw.id,
@@ -35,8 +59,12 @@ export class InvoiceAdapter {
 
   adaptListItem(
     raw: RawInvoiceListItem,
-    options: { includePatient: boolean } = { includePatient: true },
+    options: { includePatient?: boolean; language?: Language } = {
+      includePatient: true,
+      language: 'ar',
+    },
   ): InvoiceListItemDto {
+    const language = options.language ?? 'ar';
     const paidAmount = sumAmounts(raw.payments.map((p) => p.amount));
     const totalAmount = new Prisma.Decimal(raw.totalAmount);
     const remainingAmount = Prisma.Decimal.max(
@@ -49,6 +77,7 @@ export class InvoiceAdapter {
       invoiceNumber: raw.invoiceNumber,
       patientId: raw.patientId,
       treatmentPlanId: raw.treatmentPlanId,
+      treatmentPlanName: this.adaptTreatmentPlanName(raw.treatmentPlan, language),
       status: raw.status,
       totalAmount: moneyString(totalAmount),
       paidAmount: moneyString(paidAmount),
@@ -101,6 +130,7 @@ export class InvoiceAdapter {
       invoiceNumber: raw.invoiceNumber,
       patientId: raw.patientId,
       treatmentPlanId: raw.treatmentPlanId,
+      treatmentPlanName: this.adaptTreatmentPlanName(raw.treatmentPlan, language),
       createdByAccountId: raw.createdByAccountId,
       status: raw.status,
       totalAmount: moneyString(totalAmount),

@@ -149,6 +149,7 @@ export class InvoiceService {
   async listForAccount(
     accountId: number,
     query: AppInvoiceListQueryDto,
+    language: Language = 'ar',
   ): Promise<InvoiceListResponseDto> {
     if (query.patientId != null) {
       await this.assertOwnedPatient(query.patientId, accountId);
@@ -184,7 +185,7 @@ export class InvoiceService {
     ]);
 
     return new InvoiceListResponseDto(
-      rows.map((row) => this.invoiceAdapter.adaptListItem(row)),
+      rows.map((row) => this.invoiceAdapter.adaptListItem(row, { language })),
       total,
       this.invoiceAdapter.adaptListSummary(summaryRows),
     );

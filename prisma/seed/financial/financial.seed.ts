@@ -24,7 +24,7 @@ type SeedPayment = {
 
 type SeedInvoice = {
   invoiceNumber: string;
-  treatmentPlanId: number | null;
+  treatmentPlanId: number;
   issuedAt: Date;
   items: SeedInvoiceItem[];
   payments: SeedPayment[];
@@ -60,9 +60,6 @@ function deriveStatus(
  * Plan C (whitening completed): S2 actual 155000, S3 actual 105000
  *   INV-SEED-C-01  155000 PAID
  *   INV-SEED-C-02  105000 PARTIALLY_PAID (60000 paid)
- *
- * Patient-level (no plan):
- *   INV-SEED-P-01   25000 UNPAID
  */
 export async function upsertDemoFinancials(prisma: PrismaService) {
   const patient = await prisma.patient.findFirst({
@@ -104,6 +101,8 @@ export async function upsertDemoFinancials(prisma: PrismaService) {
       'Demo treatment plans A/B/C not found — seed demo patient journey first',
     );
   }
+
+  await removeLegacyPatientLevelSeedInvoice(prisma);
 
   const invoices: SeedInvoice[] = [
     {
@@ -199,20 +198,6 @@ export async function upsertDemoFinancials(prisma: PrismaService) {
         },
       ],
     },
-    {
-      invoiceNumber: 'INV-SEED-P-01',
-      treatmentPlanId: null,
-      issuedAt: new Date(2026, 7, 10, 9, 0, 0, 0),
-      items: [
-        {
-          descriptionAr: 'أدوية ومستلزمات',
-          descriptionEn: 'Medication and supplies',
-          quantity: 1,
-          unitPrice: 25000,
-        },
-      ],
-      payments: [],
-    },
   ];
 
   for (const spec of invoices) {
@@ -223,6 +208,21 @@ export async function upsertDemoFinancials(prisma: PrismaService) {
       spec,
     });
   }
+}
+
+/** Removed from seed — all demo invoices must link to a treatment plan. */
+async function removeLegacyPatientLevelSeedInvoice(prisma: PrismaService) {
+  const legacy = await prisma.invoice.findUnique({
+    where: { invoiceNumber: 'INV-SEED-P-01' },
+    select: { id: true },
+  });
+  if (!legacy) {
+    return;
+  }
+
+  await prisma.payment.deleteMany({ where: { invoiceId: legacy.id } });
+  await prisma.invoiceItem.deleteMany({ where: { invoiceId: legacy.id } });
+  await prisma.invoice.delete({ where: { id: legacy.id } });
 }
 
 async function upsertSeedInvoice(

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import type { Language } from 'src/common/i18n/helper';
 import {
   AccountStatementResponseDto,
   FinancialSummaryPatientDto,
@@ -28,7 +29,9 @@ export class FinancialStatementAdapter {
   adaptSummary(input: {
     scope: 'PATIENT' | 'FAMILY';
     patients: PatientBucket[];
+    language?: Language;
   }): FinancialSummaryResponseDto {
+    const language = input.language ?? 'ar';
     const patientDtos = input.patients.map((patient) => {
       const billed = sumAmounts(patient.invoices.map((i) => i.totalAmount));
       const paid = sumAmounts(
@@ -47,7 +50,10 @@ export class FinancialStatementAdapter {
         totalPaid: moneyString(paid),
         totalRemaining: moneyString(remaining),
         invoices: patient.invoices.map((invoice) =>
-          this.invoiceAdapter.adaptListItem(invoice, { includePatient: false }),
+          this.invoiceAdapter.adaptListItem(invoice, {
+            includePatient: false,
+            language,
+          }),
         ),
       });
     });

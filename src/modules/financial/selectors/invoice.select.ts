@@ -29,6 +29,17 @@ export const paymentSelect = {
   createdAt: true,
 } satisfies Prisma.PaymentSelect;
 
+export const invoiceTreatmentPlanSelect = {
+  nameAr: true,
+  nameEn: true,
+  template: {
+    select: {
+      nameAr: true,
+      nameEn: true,
+    },
+  },
+} satisfies Prisma.TreatmentPlanSelect;
+
 export const invoiceListSelect = {
   id: true,
   invoiceNumber: true,
@@ -38,6 +49,7 @@ export const invoiceListSelect = {
   totalAmount: true,
   issuedAt: true,
   patient: { select: invoicePatientSelect },
+  treatmentPlan: { select: invoiceTreatmentPlanSelect },
   payments: {
     select: paymentSelect,
     orderBy: { paidAt: 'asc' as const },
@@ -56,6 +68,7 @@ export const invoiceDetailSelect = {
   createdAt: true,
   updatedAt: true,
   patient: { select: invoicePatientSelect },
+  treatmentPlan: { select: invoiceTreatmentPlanSelect },
   items: {
     select: invoiceItemSelect,
     orderBy: { id: 'asc' as const },
