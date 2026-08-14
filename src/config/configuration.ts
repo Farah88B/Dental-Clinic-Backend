@@ -20,6 +20,8 @@ export default () => ({
   sms: {
     mode: process.env.SMS_MODE ?? 'stub',
     staticOtpCode: process.env.SMS_STATIC_OTP_CODE ?? '123456',
+    apiUrl: process.env.SMS_API_URL ?? 'https://www.traccar.org/sms/',
+    apiKey: process.env.SMS_API_KEY ?? '',
   },
 
   media: {

@@ -121,6 +121,8 @@ describe('PatientTreatmentService', () => {
       isActive: true,
       createdAt: new Date('2026-08-01T00:00:00.000Z'),
       updatedAt: new Date('2026-08-02T00:00:00.000Z'),
+      nameAr: 'خطة علاجية يدوية — خطة أ',
+      nameEn: 'Manual Treatment Plan A',
       template: null,
       sessions: [
         {
@@ -168,6 +170,7 @@ describe('PatientTreatmentService', () => {
     expect(result.sessions[1].canTreat).toBe(false);
     expect(result.sessions[0]).not.toHaveProperty('treatmentPlanId');
     expect(result.sessions[0]).not.toHaveProperty('actualCost');
+    expect(result.name).toBe('خطة علاجية يدوية — خطة أ');
   });
 
   it('listSessions(COMPLETED) embeds pending rating and plan names', async () => {
@@ -197,6 +200,8 @@ describe('PatientTreatmentService', () => {
         encounter: null,
         treatmentPlan: {
           id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
           template: { nameAr: 'خطة', nameEn: 'Plan' },
           sessions: [
             {
@@ -228,6 +233,8 @@ describe('PatientTreatmentService', () => {
         encounter: null,
         treatmentPlan: {
           id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
           template: { nameAr: 'خطة', nameEn: 'Plan' },
           sessions: [
             {
@@ -262,6 +269,48 @@ describe('PatientTreatmentService', () => {
     expect(result[0]).not.toHaveProperty('actualCost');
   });
 
+  it('listSessions() uses plan name when the plan has no template', async () => {
+    prisma.patient.findUniqueOrThrow.mockResolvedValue({ id: 7 });
+    prisma.treatmentSession.findMany.mockResolvedValue([
+      {
+        id: 1,
+        treatmentPlanId: 1,
+        sessionOrder: 1,
+        titleAr: 'جلسة',
+        titleEn: 'Session',
+        status: TreatmentSessionStatus.COMPLETED,
+        durationMinutes: 30,
+        estimatedCost: new Decimal(40),
+        availableForBookingAt: null,
+        completedAt: new Date('2026-08-03T09:00:00.000Z'),
+        rating: 5,
+        appointments: [],
+        encounter: null,
+        treatmentPlan: {
+          id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
+          template: null,
+          sessions: [
+            {
+              id: 1,
+              sessionOrder: 1,
+              status: TreatmentSessionStatus.COMPLETED,
+            },
+          ],
+        },
+      },
+    ]);
+
+    const result = await service.listSessions(
+      7,
+      { kind: 'patient', accountId: 11 },
+      TreatmentSessionStatus.COMPLETED,
+    );
+
+    expect(result[0].planName).toBe('خطة علاجية يدوية — خطة أ');
+  });
+
   it('listSessionsForBooking() returns PENDING with canBook flags', async () => {
     prisma.patient.findUniqueOrThrow.mockResolvedValue({ id: 7 });
     const planSessions = [
@@ -287,6 +336,8 @@ describe('PatientTreatmentService', () => {
         encounter: null,
         treatmentPlan: {
           id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
           template: { nameAr: 'خطة', nameEn: 'Plan' },
           sessions: planSessions,
         },
@@ -307,6 +358,8 @@ describe('PatientTreatmentService', () => {
         encounter: null,
         treatmentPlan: {
           id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
           template: null,
           sessions: planSessions,
         },
@@ -331,7 +384,7 @@ describe('PatientTreatmentService', () => {
     expect(result[0].canTreat).toBe(false);
     expect(result[0].planName).toBe('خطة');
     expect(result[1].canBook).toBe(false);
-    expect(result[1].planName).toBeNull();
+    expect(result[1].planName).toBe('خطة علاجية يدوية — خطة أ');
   });
 
   it('canTreat is true for BOOKED + CONFIRMED appointment', async () => {
@@ -359,6 +412,8 @@ describe('PatientTreatmentService', () => {
         encounter: null,
         treatmentPlan: {
           id: 1,
+          nameAr: 'خطة علاجية يدوية — خطة أ',
+          nameEn: 'Manual Treatment Plan A',
           template: null,
           sessions: [
             {
@@ -380,5 +435,6 @@ describe('PatientTreatmentService', () => {
     expect(result[0].canBook).toBe(false);
     expect(result[0].canTreat).toBe(true);
     expect(result[0].estimatedCost).toBe('40');
+    expect(result[0].planName).toBe('خطة علاجية يدوية — خطة أ');
   });
 });

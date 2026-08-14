@@ -63,13 +63,15 @@ export const patientTreatmentSessionSelect = () => {
   });
 };
 
-/** Cross-plan list: session + plan template names + sibling statuses for canBook. */
+/** Cross-plan list: session + plan names + sibling statuses for canBook. */
 export const patientTreatmentSessionListSelect = () => {
   return Prisma.validator<Prisma.TreatmentSessionSelect>()({
     ...patientTreatmentSessionSelect(),
     treatmentPlan: {
       select: {
         id: true,
+        nameAr: true,
+        nameEn: true,
         template: { select: patientTreatmentTemplateSummarySelect() },
         sessions: {
           select: { id: true, sessionOrder: true, status: true },
