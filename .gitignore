@@ -57,6 +57,11 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
 
+# Firebase secrets (never commit client or service-account files)
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase-service-account*.json
+
 # Uploaded media (keep directory structure via .gitkeep)
 /uploads/**
 !/uploads/

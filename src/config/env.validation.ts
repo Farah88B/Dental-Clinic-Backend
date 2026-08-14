@@ -33,6 +33,12 @@ JWT_REFRESH_SECRET:
   GEMINI_API_KEY: Joi.string().allow('').optional(),
 
   GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
+
+  FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),
+
+  FIREBASE_CLIENT_EMAIL: Joi.string().allow('').optional(),
+
+  FIREBASE_PRIVATE_KEY: Joi.string().allow('').optional(),
 });
 
 // this service will validate the environment variables using the above schema. If any of the required variables are missing or invalid, it will throw an error and prevent the application from starting.

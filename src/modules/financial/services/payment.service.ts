@@ -11,6 +11,7 @@ import {
 import { AdminListDto } from 'src/common/admin/admin-list.dto';
 import { FINANCIAL_ERROR_CODES } from 'src/common/constants/financial.constants';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
+import { NotificationRecipientService } from 'src/modules/notification/services/notification-recipient.service';
 import { InvoiceAdapter } from '../adapter/invoice.adapter';
 import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { AppPaymentListQueryDto } from '../dto/invoice-list-query.dto';
@@ -26,12 +27,15 @@ import {
   invoiceDetailSelect,
   paymentSelect,
 } from '../selectors/invoice.select';
+import { FinancialNotificationService } from './financial-notification.service';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly invoiceAdapter: InvoiceAdapter,
+    private readonly financialNotifications: FinancialNotificationService,
+    private readonly notificationRecipients: NotificationRecipientService,
   ) {}
 
   async create(
@@ -84,7 +88,7 @@ export class PaymentService {
         );
       }
 
-      await tx.payment.create({
+      const payment = await tx.payment.create({
         data: {
           invoiceId,
           amount,
@@ -92,6 +96,7 @@ export class PaymentService {
           notes: dto.notes,
           receivedByAccountId,
         },
+        select: { id: true },
       });
 
       const paidAfter = paidSoFar.add(amount);
@@ -105,13 +110,28 @@ export class PaymentService {
         data: { status: nextStatus },
       });
 
-      return tx.invoice.findUniqueOrThrow({
+      const invoiceDetail = await tx.invoice.findUniqueOrThrow({
         where: { id: invoiceId },
         select: invoiceDetailSelect,
       });
+
+      return { invoiceDetail, paymentId: payment.id, paymentAmount: amount };
     });
 
-    return this.invoiceAdapter.adaptDetail(updated, { bilingualItems: true });
+    this.notificationRecipients.dispatchSafely(
+      this.financialNotifications.onPaymentReceived({
+        paymentId: updated.paymentId,
+        invoiceId: updated.invoiceDetail.id,
+        patientId: updated.invoiceDetail.patientId,
+        invoiceNumber: updated.invoiceDetail.invoiceNumber,
+        amount: updated.paymentAmount,
+      }),
+      `payment.create:${updated.paymentId}`,
+    );
+
+    return this.invoiceAdapter.adaptDetail(updated.invoiceDetail, {
+      bilingualItems: true,
+    });
   }
 
   async listForInvoiceStaff(invoiceId: number): Promise<PaymentResponseDto[]> {

@@ -11,6 +11,7 @@ import {
 import { FINANCIAL_ERROR_CODES } from 'src/common/constants/financial.constants';
 import type { Language } from 'src/common/i18n/helper';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
+import { NotificationRecipientService } from 'src/modules/notification/services/notification-recipient.service';
 import { InvoiceAdapter } from '../adapter/invoice.adapter';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import {
@@ -26,6 +27,7 @@ import {
   invoiceListSelect,
 } from '../selectors/invoice.select';
 import { InvoiceNumberService } from './invoice-number.service';
+import { FinancialNotificationService } from './financial-notification.service';
 
 @Injectable()
 export class InvoiceService {
@@ -33,6 +35,8 @@ export class InvoiceService {
     private readonly prisma: PrismaService,
     private readonly invoiceNumberService: InvoiceNumberService,
     private readonly invoiceAdapter: InvoiceAdapter,
+    private readonly financialNotifications: FinancialNotificationService,
+    private readonly notificationRecipients: NotificationRecipientService,
   ) {}
 
   async create(
@@ -109,6 +113,16 @@ export class InvoiceService {
         select: invoiceDetailSelect,
       });
     });
+
+    this.notificationRecipients.dispatchSafely(
+      this.financialNotifications.onInvoiceCreated({
+        invoiceId: created.id,
+        patientId: created.patientId,
+        invoiceNumber: created.invoiceNumber,
+        totalAmount: created.totalAmount,
+      }),
+      `invoice.create:${created.id}`,
+    );
 
     return this.invoiceAdapter.adaptDetail(created, { bilingualItems: true });
   }

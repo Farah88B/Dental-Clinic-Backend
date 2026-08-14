@@ -1,5 +1,6 @@
 import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 
@@ -25,6 +26,8 @@ async function bootstrap() {
     origin: true,
     credentials: true,
   });
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   
   // Versioning

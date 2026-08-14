@@ -127,6 +127,9 @@ model Account {
   createdInvoices  Invoice[] @relation("InvoiceCreator")
   receivedPayments Payment[] @relation("PaymentReceiver")
 
+  notifications Notification[]
+  deviceTokens  DeviceToken[]
+
 }
 
 model AccountRole {
@@ -813,4 +816,55 @@ model Payment {
   @@index([invoiceId])
   @@index([receivedByAccountId])
   @@index([paidAt])
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  WEB
+}
+
+model Notification {
+  id Int @id @default(autoincrement())
+
+  accountId Int
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  type String
+
+  titleAr String
+  titleEn String
+
+  bodyAr String
+  bodyEn String
+
+  data Json?
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([accountId, readAt])
+  @@index([createdAt])
+}
+
+model DeviceToken {
+  id Int @id @default(autoincrement())
+
+  accountId Int
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  token String @unique
+
+  platform DevicePlatform
+
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([platform])
 }
