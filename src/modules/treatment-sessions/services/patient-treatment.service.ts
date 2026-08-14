@@ -196,13 +196,7 @@ export class PatientTreatmentService {
             session.treatmentPlan.sessions,
           ),
           treatmentPlanId: session.treatmentPlanId,
-          planName: session.treatmentPlan.template
-            ? pickLocalized(
-                session.treatmentPlan.template.nameAr,
-                session.treatmentPlan.template.nameEn,
-                language,
-              )
-            : null,
+          planName: this.resolvePlanName(session.treatmentPlan, language),
         }),
     );
   }
@@ -237,13 +231,7 @@ export class PatientTreatmentService {
             session.treatmentPlan.sessions,
           ),
           treatmentPlanId: session.treatmentPlanId,
-          planName: session.treatmentPlan.template
-            ? pickLocalized(
-                session.treatmentPlan.template.nameAr,
-                session.treatmentPlan.template.nameEn,
-                language,
-              )
-            : null,
+          planName: this.resolvePlanName(session.treatmentPlan, language),
         }),
     );
   }
@@ -288,6 +276,8 @@ export class PatientTreatmentService {
                 treatmentPlan: {
                   select: {
                     id: true,
+                    nameAr: true,
+                    nameEn: true,
                     template: {
                       select: { nameAr: true, nameEn: true },
                     },
@@ -317,13 +307,7 @@ export class PatientTreatmentService {
           title: pickLocalized(session.titleAr, session.titleEn, language),
           plan: new PatientMedicalArchivePlanResponseDto({
             id: plan.id,
-            name: plan.template
-              ? pickLocalized(
-                  plan.template.nameAr,
-                  plan.template.nameEn,
-                  language,
-                )
-              : null,
+            name: this.resolvePlanName(plan, language),
           }),
         }),
       });
@@ -455,6 +439,25 @@ export class PatientTreatmentService {
     });
   }
 
+  private resolvePlanName(
+    plan: {
+      nameAr: string | null;
+      nameEn: string | null;
+      template: { nameAr: string; nameEn: string } | null;
+    },
+    language: UiLanguage,
+  ): string {
+    if (plan.template) {
+      return pickLocalized(
+        plan.template.nameAr,
+        plan.template.nameEn,
+        language,
+      );
+    }
+
+    return pickLocalized(plan.nameAr ?? '', plan.nameEn ?? '', language);
+  }
+
   private mapPlanSummary(
     plan: {
       id: number;
@@ -483,9 +486,7 @@ export class PatientTreatmentService {
       isActive: plan.isActive,
       sessionCount,
       progressPercent,
-      name: plan.template
-        ? pickLocalized(plan.template.nameAr, plan.template.nameEn, language)
-        : pickLocalized(plan.nameAr ?? '', plan.nameEn ?? '', language),
+      name: this.resolvePlanName(plan, language),
       createdAt: plan.createdAt,
       updatedAt: plan.updatedAt,
     });

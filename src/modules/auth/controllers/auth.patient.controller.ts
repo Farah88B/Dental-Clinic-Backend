@@ -2,7 +2,7 @@ import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorator';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from 'src/common/decorators/public.decorator';
-import { Throttle } from '@nestjs/throttler';
+// import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ReqUser } from 'src/common/decorators/req-user.decorator';
 import { AuthService } from '../services/auth.service';
@@ -25,7 +25,7 @@ export class AuthPatientAppController {
 
   @Public()
   @Post('register')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Step 1: create account (PENDING_ACTIVATION) and send OTP — يُستخدم من: تطبيق المريض' })
   registerStart(@Body() dto: RegisterDto) {
     return this.authService.registerStart(dto);
@@ -41,7 +41,7 @@ export class AuthPatientAppController {
 
   @Public()
   @Post('forgot-password')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Request a password-reset OTP — يُستخدم من: تطبيق المريض' })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
@@ -49,7 +49,7 @@ export class AuthPatientAppController {
 
   @Public()
   @Post('verify-reset-otp')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Verify reset OTP and return a short-lived reset token — يُستخدم من: تطبيق المريض' })
   @ApiBaseResponse(ResetPasswordTokenDto)
   verifyResetOtp(@Body() dto: VerifyResetOtpDto) {
@@ -66,7 +66,7 @@ export class AuthPatientAppController {
   @ApiBearerAuth('JWT')
   @UseGuards(JwtAuthGuard)
   @Post('change-phone/start')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Step 1: request OTP to the NEW phone number — يُستخدم من: تطبيق المريض' })
   startChangePhone(@ReqUser('id') accountId: number, @Body() dto: StartChangePhoneDto) {
     return this.authService.startChangePhone(accountId, dto);

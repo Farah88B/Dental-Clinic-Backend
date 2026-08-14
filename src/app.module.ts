@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+// import { ThrottlerModule } from '@nestjs/throttler';
 import { TerminusModule } from '@nestjs/terminus';
 import { ScheduleModule } from '@nestjs/schedule';
 import { envValidationSchema }from './config/env.validation';
@@ -12,7 +12,7 @@ import { MediaModule } from './common/media/media.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
-import { AppThrottlerGuard } from './common/guards/throttler.guard';
+// import { AppThrottlerGuard } from './common/guards/throttler.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { HealthModule } from './health/health.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
@@ -49,12 +49,12 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60_000, // 1 minute window
-        limit: 100, // 100 requests / minute / IP as a sane default
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     ttl: 60_000, // 1 minute window
+    //     limit: 100, // 100 requests / minute / IP as a sane default
+    //   },
+    // ]),
    AppLoggerModule,
     PrismaModule,
     MediaModule,
@@ -83,10 +83,10 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
 providers: [
   AppService,
   // Global Guards
-  {
-    provide: APP_GUARD,
-    useClass: AppThrottlerGuard,
-  },
+  // {
+  //   provide: APP_GUARD,
+  //   useClass: AppThrottlerGuard,
+  // },
 
   // Global Interceptors
   {

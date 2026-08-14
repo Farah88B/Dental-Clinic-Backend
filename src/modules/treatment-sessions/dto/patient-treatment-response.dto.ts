@@ -104,11 +104,14 @@ export class PatientTreatmentSessionBaseResponseDto {
   }
 }
 
-/** Cross-plan session list item (includes plan id + template names). */
+/** Cross-plan session list item (includes plan id + localized plan name). */
 export class PatientTreatmentSessionResponseDto extends PatientTreatmentSessionBaseResponseDto {
   @ApiProperty() treatmentPlanId!: number;
-  @ApiProperty({ required: false, nullable: true })
-  planName!: string | null;
+  @ApiProperty({
+    description:
+      'Localized plan name (template name when linked, otherwise the plan name)',
+  })
+  planName!: string;
 
   constructor(partial: Partial<PatientTreatmentSessionResponseDto>) {
     super(partial);
@@ -139,11 +142,10 @@ export class PatientTreatmentPlanResponseDto {
   })
   progressPercent!: number;
   @ApiProperty({
-    required: false,
-    nullable: true,
-    description: 'Localized plan name (from linked template when present)',
+    description:
+      'Localized plan name (template name when linked, otherwise the plan name)',
   })
-  name!: string | null;
+  name!: string;
   @ApiProperty() createdAt!: Date;
   @ApiProperty() updatedAt!: Date;
 
@@ -166,11 +168,10 @@ export class PatientTreatmentPlanDetailResponseDto extends PatientTreatmentPlanR
 export class PatientMedicalArchivePlanResponseDto {
   @ApiProperty() id!: number;
   @ApiProperty({
-    required: false,
-    nullable: true,
-    description: 'Localized plan name (from linked template when present)',
+    description:
+      'Localized plan name (template name when linked, otherwise the plan name)',
   })
-  name!: string | null;
+  name!: string;
 
   constructor(partial: Partial<PatientMedicalArchivePlanResponseDto>) {
     Object.assign(this, partial);
