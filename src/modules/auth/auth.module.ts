@@ -13,10 +13,10 @@ import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SmsGatewayStub } from './adapter/sms-gateway.stub';
 import { TraccarSmsGateway } from './adapter/traccar-sms.gateway';
+import { SmsChefSmsGateway } from './adapter/smschef-sms.gateway';
 import { SMS_GATEWAY } from './adapter/sms-gateway.token';
 import { OTP_CODE_GENERATOR } from './adapter/otp-code-generator.token';
 import { RandomOtpCodeGenerator } from './adapter/random-otp-code-generator';
-import { StaticOtpCodeGenerator } from './adapter/static-otp-code-generator';
 import { AccountRolesModule } from '../account-roles/account-roles.module';
 
 @Module({
@@ -48,19 +48,21 @@ import { AccountRolesModule } from '../account-roles/account-roles.module';
       provide: SMS_GATEWAY,
       useFactory: (config: ConfigService) => {
         const mode = config.get<string>('sms.mode') ?? 'stub';
-        return mode === 'live'
-          ? new TraccarSmsGateway(config)
-          : new SmsGatewayStub();
+        if (mode !== 'live') {
+          return new SmsGatewayStub();
+        }
+
+        const provider = config.get<string>('sms.provider') ?? 'traccar';
+        return provider === 'smschef'
+          ? new SmsChefSmsGateway(config)
+          : new TraccarSmsGateway(config);
       },
       inject: [ConfigService],
     },
     {
+      // Always random — stub mode exposes the code in API responses instead of using a fixed OTP.
       provide: OTP_CODE_GENERATOR,
-      useFactory: (config: ConfigService) => {
-        const mode = config.get<string>('sms.mode') ?? 'stub';
-        return mode === 'live' ? new RandomOtpCodeGenerator() : new StaticOtpCodeGenerator(config);
-      },
-      inject: [ConfigService],
+      useClass: RandomOtpCodeGenerator,
     },
   ],
   exports: [AuthService],

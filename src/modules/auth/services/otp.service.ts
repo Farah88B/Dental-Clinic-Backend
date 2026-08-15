@@ -66,7 +66,7 @@ export class OtpService {
     phone: string,
     type: OtpType,
     metadata?: Prisma.InputJsonValue,
-  ): Promise<void> {
+  ): Promise<string> {
     await this.assertResendPolicy(accountId, type);
     await this.invalidatePreviousOtps(accountId, type);
 
@@ -83,12 +83,13 @@ export class OtpService {
       },
     });
 
-    await this.smsGateway.send(phone, `رمز التحقق الخاص بك: ${code}`);
+    await this.smsGateway.send(phone, `Senni Dental Clinic\nYour code: ${code}`);
+    return code;
   }
 
   // Create and send a fresh OTP for a given account and OTP type.
-  async send(accountId: number, phone: string, type: OtpType): Promise<void> {
-    await this.createOtp(accountId, phone, type);
+  async send(accountId: number, phone: string, type: OtpType): Promise<string> {
+    return this.createOtp(accountId, phone, type);
   }
 
   // Validate the latest OTP for the account/type and mark it used on success.
@@ -125,8 +126,8 @@ export class OtpService {
     phone: string,
     type: OtpType,
     metadata: Prisma.InputJsonValue,
-  ): Promise<void> {
-    await this.createOtp(accountId, phone, type, metadata);
+  ): Promise<string> {
+    return this.createOtp(accountId, phone, type, metadata);
   }
 
   // Validate the OTP and return the stored row, including metadata.

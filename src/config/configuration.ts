@@ -19,9 +19,16 @@ export default () => ({
 },
   sms: {
     mode: process.env.SMS_MODE ?? 'stub',
+    provider: process.env.SMS_PROVIDER ?? 'traccar',
     staticOtpCode: process.env.SMS_STATIC_OTP_CODE ?? '123456',
-    apiUrl: process.env.SMS_API_URL ?? 'https://www.traccar.org/sms/',
+    apiUrl:
+      process.env.SMS_API_URL ??
+      (process.env.SMS_PROVIDER === 'smschef'
+        ? 'https://www.cloud.smschef.com/api/send/sms'
+        : 'https://www.traccar.org/sms/'),
     apiKey: process.env.SMS_API_KEY ?? '',
+    deviceId: process.env.SMS_DEVICE_ID ?? '',
+    sim: parseInt(process.env.SMS_SIM ?? '1', 10),
   },
 
   media: {
