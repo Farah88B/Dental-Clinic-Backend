@@ -20,6 +20,7 @@ import { ApiBaseResponse } from 'src/common/decorators/api-base-response.decorat
 import { ApiPaginatedResponse } from 'src/common/decorators/api-paginated-response.decorator';
 import { AuditAction } from 'src/common/decorators/audit-user-action.decorator';
 import { ReqUser } from 'src/common/decorators/req-user.decorator';
+import type { AuthenticatedAccount } from 'src/common/interfaces/authenticated-account.interface';
 import {
   HasPagination,
 } from 'src/common/pagination/pagination-query-params.decorator';
@@ -79,9 +80,13 @@ export class AppointmentAppController {
   @ApiPaginatedResponse(AppointmentListItemDto)
   list(
     @Query() query: PatientAppointmentListQueryDto,
-    @ReqUser('id') accountId: number,
+    @ReqUser() user: AuthenticatedAccount,
   ) {
-    return this.appointmentQueryService.listForPatient(query, accountId);
+    return this.appointmentQueryService.listForPatient(
+      query,
+      user.id,
+      user.preferredLanguage,
+    );
   }
 
   @Get(':id')

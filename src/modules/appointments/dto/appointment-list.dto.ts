@@ -118,6 +118,20 @@ export class AppointmentListItemDto {
   @ApiPropertyOptional({ nullable: true })
   reasonForVisit!: string | null;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'Localized treatment session title when the appointment is linked to a session',
+  })
+  treatmentSessionName!: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'Localized treatment plan name when the appointment is linked to a session',
+  })
+  treatmentPlanName!: string | null;
+
   @ApiPropertyOptional({ type: AppointmentPatientSummaryDto })
   patient?: AppointmentPatientSummaryDto;
 

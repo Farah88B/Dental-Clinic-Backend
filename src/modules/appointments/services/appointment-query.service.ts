@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { AppointmentStatus, Prisma } from '@prisma/client';
 import { AdminListDto } from 'src/common/admin/admin-list.dto';
+import { toUiLanguage } from 'src/common/i18n/localize.helper';
 import { PrismaService } from 'src/common/prisma/services/prisma.service';
 import { AppointmentAdapter } from '../adapter/appointment.adapter';
 import { AppointmentResponseDto } from '../dto/appointment-response.dto';
@@ -62,9 +63,11 @@ export class AppointmentQueryService {
   async listForPatient(
     query: PatientAppointmentListQueryDto,
     accountId: number,
+    preferredLanguage?: string,
   ): Promise<AdminListDto<AppointmentListItemDto>> {
     await this.assertOwnedPatient(query.patientId, accountId);
 
+    const language = toUiLanguage(preferredLanguage);
     const where =
       query.scope === AppointmentListScope.UPCOMING
         ? this.upcomingWhere(query.patientId)
@@ -88,7 +91,10 @@ export class AppointmentQueryService {
 
     return new AdminListDto(
       rows.map((row) =>
-        this.adapter.adaptListItem(row, { includePatient: false }),
+        this.adapter.adaptListItem(row, {
+          includePatient: false,
+          language,
+        }),
       ),
       total,
     );

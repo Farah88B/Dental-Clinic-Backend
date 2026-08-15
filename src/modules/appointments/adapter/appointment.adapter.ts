@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { Language } from 'src/common/i18n/helper';
+import { pickLocalized } from 'src/common/i18n/localize.helper';
 import { AppointmentResponseDto } from '../dto/appointment-response.dto';
 import {
   AppointmentListItemDto,
@@ -43,8 +45,11 @@ export class AppointmentAdapter {
 
   adaptListItem(
     raw: RawAppointmentListItem,
-    options: { includePatient: boolean },
+    options: { includePatient: boolean; language?: Language },
   ): AppointmentListItemDto {
+    const language = options.language ?? 'ar';
+    const session = raw.treatmentSession;
+
     return new AppointmentListItemDto({
       id: raw.id,
       patientId: raw.patientId,
@@ -54,6 +59,13 @@ export class AppointmentAdapter {
       durationMinutes: raw.durationMinutes,
       isWaiting: raw.isWaiting,
       reasonForVisit: raw.reasonForVisit,
+      treatmentSessionName: session
+        ? pickLocalized(session.titleAr, session.titleEn, language)
+        : null,
+      treatmentPlanName: this.adaptTreatmentPlanName(
+        session?.treatmentPlan ?? null,
+        language,
+      ),
       patient: options.includePatient
         ? new AppointmentPatientSummaryDto({
             id: raw.patient.id,
@@ -73,5 +85,32 @@ export class AppointmentAdapter {
         medicalRecordNumber: raw.patient.medicalRecordNumber,
       }),
     });
+  }
+
+  private adaptTreatmentPlanName(
+    treatmentPlan: NonNullable<
+      RawAppointmentListItem['treatmentSession']
+    >['treatmentPlan'] | null,
+    language: Language,
+  ): string | null {
+    if (!treatmentPlan) {
+      return null;
+    }
+
+    if (treatmentPlan.template) {
+      return pickLocalized(
+        treatmentPlan.template.nameAr,
+        treatmentPlan.template.nameEn,
+        language,
+      );
+    }
+
+    const localized = pickLocalized(
+      treatmentPlan.nameAr ?? '',
+      treatmentPlan.nameEn ?? '',
+      language,
+    ).trim();
+
+    return localized || null;
   }
 }

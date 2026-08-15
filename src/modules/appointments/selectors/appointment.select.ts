@@ -39,10 +39,30 @@ const appointmentPatientSelect = {
   medicalRecordNumber: true,
 } satisfies Prisma.PatientSelect;
 
+const appointmentTreatmentSessionSelect = {
+  id: true,
+  titleAr: true,
+  titleEn: true,
+  treatmentPlan: {
+    select: {
+      id: true,
+      nameAr: true,
+      nameEn: true,
+      template: {
+        select: {
+          nameAr: true,
+          nameEn: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.TreatmentSessionSelect;
+
 export function appointmentListSelect() {
   return {
     ...appointmentSelect(),
     patient: { select: appointmentPatientSelect },
+    treatmentSession: { select: appointmentTreatmentSessionSelect },
   } satisfies Prisma.AppointmentSelect;
 }
 
